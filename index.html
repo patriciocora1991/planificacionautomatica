@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Planificador Físico & Control de Carga (UA)</title>
+    <title>Planificador Automatizado de Carga (MD & UA)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
@@ -14,20 +14,20 @@
         <!-- Header -->
         <header class="border-b border-slate-700 pb-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
-                <h1 class="text-3xl font-bold text-emerald-400">Control de Carga & Microciclo Específico</h1>
-                <p class="text-slate-400 text-sm">Monitoreo biomecánico y cuantificación mediante Unidades Arbitrarias (UA)</p>
+                <h1 class="text-3xl font-bold text-emerald-400">Calendario Semanal de Carga Automatizado</h1>
+                <p class="text-slate-400 text-sm">Distribución dinámica según el día de partido (MD) y cuantificación por UA</p>
             </div>
             <div class="bg-slate-800 p-3 rounded-lg border border-slate-700">
-                <span class="text-xs text-slate-400 font-mono block">Fórmula de Carga Interna:</span>
+                <span class="text-xs text-slate-400 font-mono block">Cuantificación de Carga:</span>
                 <span class="text-emerald-400 font-bold font-mono">UA = sRPE (1-10) × Tiempo (min)</span>
             </div>
         </header>
 
-        <!-- Panel de Configuración -->
+        <!-- Panel de Control de Automatización -->
         <section class="bg-slate-800 p-6 rounded-xl border border-slate-700 grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
-                <label class="block text-sm font-medium text-slate-300 mb-2">Día de Partido (Match Day - MD)</label>
-                <select id="matchDaySelect" class="w-full bg-slate-900 border border-slate-600 rounded-lg p-2.5 text-white focus:ring-2 focus:ring-emerald-500">
+                <label class="block text-sm font-semibold text-slate-200 mb-2">Seleccionar Día de Partido (MD)</label>
+                <select id="matchDaySelect" onchange="autoPlanWeek()" class="w-full bg-slate-900 border border-slate-600 rounded-lg p-2.5 text-white focus:ring-2 focus:ring-emerald-500 font-medium">
                     <option value="0">Lunes</option>
                     <option value="1">Martes</option>
                     <option value="2">Miércoles</option>
@@ -38,100 +38,88 @@
                 </select>
             </div>
             <div>
-                <label class="block text-sm font-medium text-slate-300 mb-2">Criterio de Programación Auto</label>
-                <select id="criteriaSelect" class="w-full bg-slate-900 border border-slate-600 rounded-lg p-2.5 text-white focus:ring-2 focus:ring-emerald-500">
-                    <option value="target">Objetivo de UA</option>
-                    <option value="time">Tiempo Disponible (min)</option>
+                <label class="block text-sm font-semibold text-slate-200 mb-2">Objetivo de la Semana</label>
+                <select id="weekGoalSelect" onchange="autoPlanWeek()" class="w-full bg-slate-900 border border-slate-600 rounded-lg p-2.5 text-white focus:ring-2 focus:ring-emerald-500 font-medium">
+                    <option value="standard" selected>Estándar (Microciclo Estructurado)</option>
+                    <option value="high">Alta Carga (Overreaching Controlado)</option>
+                    <option value="tapering">Descarga / Tapering (Pre-Competencia Crítica)</option>
                 </select>
             </div>
             <div class="flex items-end">
-                <button onclick="generateWeek()" class="w-full bg-emerald-600 hover:bg-emerald-500 font-bold py-2.5 px-4 rounded-lg transition duration-200 shadow-lg shadow-emerald-900/40">
-                    Generar Semana de Trabajo
+                <button onclick="simulateAllRealUA()" class="w-full bg-emerald-600 hover:bg-emerald-500 font-bold py-2.5 px-4 rounded-lg transition duration-200 shadow-lg shadow-emerald-900/40 text-sm">
+                    Simular Ejecución Real Completa
                 </button>
             </div>
         </section>
 
-        <!-- Visualización Gráfica y Dashboard -->
+        <!-- Visualización en Calendario (Tarjetas de Lunes a Domingo) -->
+        <section>
+            <h2 class="text-xl font-bold mb-4 text-emerald-400">Vista de Calendario Semanal (Lunes a Domingo)</h2>
+            <div id="calendarGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-7 gap-3">
+                <!-- Se genera dinámicamente -->
+            </div>
+        </section>
+
+        <!-- Dashboard: Gráfica de Ondulación y Calculadora -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             
-            <!-- Gráfico UA -->
+            <!-- Gráfico Ondulación Semanal -->
             <div class="lg:col-span-2 bg-slate-800 p-6 rounded-xl border border-slate-700">
-                <h2 class="text-xl font-semibold mb-4 text-emerald-400">Ondulación Semanal de UA (Objetivo vs Real)</h2>
+                <h2 class="text-xl font-semibold mb-4 text-emerald-400">Ondulación de Carga (UA Programada vs Real)</h2>
                 <div class="h-64">
                     <canvas id="uaChart"></canvas>
                 </div>
             </div>
 
-            <!-- Registro RPE / Calculadora sRPE -->
+            <!-- Panel de Ajuste Rápido del Día -->
             <div class="bg-slate-800 p-6 rounded-xl border border-slate-700 flex flex-col justify-between">
                 <div>
-                    <h2 class="text-xl font-semibold mb-3 text-emerald-400">Calculadora sRPE del Día</h2>
+                    <h2 class="text-xl font-semibold mb-3 text-emerald-400">Ajuste de Sesión Diaria</h2>
                     <div class="space-y-4">
                         <div>
-                            <label class="block text-xs text-slate-400">Día a registrar</label>
-                            <select id="calcDaySelect" class="w-full bg-slate-900 border border-slate-600 rounded p-2 text-sm text-white"></select>
+                            <label class="block text-xs text-slate-400 mb-1">Día a Modificar</label>
+                            <select id="calcDaySelect" class="w-full bg-slate-900 border border-slate-600 rounded p-2 text-sm text-white" onchange="syncInputWithSelectedDay()"></select>
                         </div>
-                        <div>
-                            <label class="block text-xs text-slate-400">RPE Observado / Percibido (1-10)</label>
-                            <input type="number" id="rpeInput" min="1" max="10" value="7" class="w-full bg-slate-900 border border-slate-600 rounded p-2 text-sm text-white">
-                        </div>
-                        <div>
-                            <label class="block text-xs text-slate-400">Duración Efectiva (minutos)</label>
-                            <input type="number" id="timeInput" min="10" max="180" value="60" class="w-full bg-slate-900 border border-slate-600 rounded p-2 text-sm text-white">
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs text-slate-400 mb-1">RPE Percibido (1-10)</label>
+                                <input type="number" id="rpeInput" min="1" max="10" value="7" class="w-full bg-slate-900 border border-slate-600 rounded p-2 text-sm text-white">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-slate-400 mb-1">Duración (min)</label>
+                                <input type="number" id="timeInput" min="0" max="180" value="60" class="w-full bg-slate-900 border border-slate-600 rounded p-2 text-sm text-white">
+                            </div>
                         </div>
                     </div>
                 </div>
 
                 <div class="mt-4 pt-4 border-t border-slate-700">
                     <div class="flex justify-between items-center mb-3">
-                        <span class="text-sm font-medium">Carga Calculada:</span>
+                        <span class="text-sm font-medium">Carga Resultante:</span>
                         <span id="calculatedUA" class="text-2xl font-bold font-mono text-emerald-400">420 UA</span>
                     </div>
-                    <button onclick="logSession()" class="w-full bg-slate-700 hover:bg-slate-600 font-semibold py-2 px-4 rounded text-sm">
-                        Cargar Carga Real al Día
+                    <button onclick="logSession()" class="w-full bg-slate-700 hover:bg-slate-600 font-semibold py-2 px-4 rounded text-sm transition">
+                        Guardar Carga Real en Calendario
                     </button>
                 </div>
             </div>
 
         </div>
 
-        <!-- Tabla Estructurada Semanal -->
-        <section class="bg-slate-800 p-6 rounded-xl border border-slate-700">
-            <h2 class="text-xl font-semibold mb-4 text-emerald-400">Plan de Trabajo Semanal</h2>
-            <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse">
-                    <thead>
-                        <tr class="border-b border-slate-700 text-xs uppercase text-slate-400 font-mono">
-                            <th class="p-3">Día</th>
-                            <th class="p-3">Fase MD</th>
-                            <th class="p-3">Semáforo</th>
-                            <th class="p-3">Enfoque Fisiológico</th>
-                            <th class="p-3">Elementos y Patrones Biomecánicos</th>
-                            <th class="p-3">UA Obj.</th>
-                            <th class="p-3">UA Real</th>
-                        </tr>
-                    </thead>
-                    <tbody id="weekTableBody" class="divide-y divide-slate-700 text-sm">
-                        <!-- Generación Dinámica -->
-                    </tbody>
-                </table>
-            </div>
-        </section>
-
     </div>
 
     <script>
         const daysOfWeek = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
         
-        // Estructura de plantilla según fase MD
+        // Base de datos de contenidos por Fase MD (Factor biomecánico corregido: Extensiones de brazos)
         const mdProfiles = {
-            "MD": { name: "MD", color: "bg-red-500/20 text-red-400 border-red-500/30", targetUA: 850, focus: "Competencia / Máxima Exigencia", items: ["Activación Neural", "Táctica Alta Intensidad", "Sprint Específico"], status: "🔴 Rojo" },
-            "MD+1": { name: "MD+1", color: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30", targetUA: 200, focus: "Regenerativo y Movilidad", items: ["Libertad Tisular", "Movilidad Torácica/Cadera", "Core Isométrico"], status: "🟩 Verde" },
-            "MD-4": { name: "MD-4", color: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30", targetUA: 500, focus: "Tensión y Fuerza Estructural", items: ["Extensiones de brazos (Empuje H.)", "Dominante Cadera (Peso Muerto)", "Sentadilla Zercher"], status: "🟨 Amarillo" },
-            "MD-3": { name: "MD-3", color: "bg-red-500/20 text-red-400 border-red-500/30", targetUA: 700, focus: "Extensión y Resistencia Específica", items: ["Dominada Pronom (Tirón V.)", "Extensiones de brazos declinadas", "Aceleraciones Intermitentes"], status: "🟥 Rojo" },
-            "MD-2": { name: "MD-2", color: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30", targetUA: 350, focus: "Velocidad y Agilidad Neuromuscular", items: ["Saltos Monopodales", "Extensiones de brazos plio", "Sprint Corto (0-10m)"], status: "🟨 Amarillo" },
-            "MD-1": { name: "MD-1", color: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30", targetUA: 150, focus: "Tapering y Potencia Reactiva", items: ["Lanzamiento Balón Medicional", "Activación del Tríceps/Pectoral", "Coordinación"], status: "🟩 Verde" },
-            "OFF": { name: "Descanso", color: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30", targetUA: 0, focus: "Recuperación Total", items: ["Descanso Activo / Pasivo"], status: "🟩 Verde" }
+            "MD": { name: "MD", phaseLabel: "PARTIDO", status: "🔴 Rojo", badgeColor: "bg-red-900/80 text-red-200 border-red-500", targetRPE: 9, targetTime: 90, focus: "Competencia", items: ["Activación Neuromuscular", "Competencia Oficial (90 min)", "Monitoreo de Impactos"] },
+            "MD+1": { name: "MD+1", phaseLabel: "Regenerativo", status: "🟩 Verde", badgeColor: "bg-emerald-900/50 text-emerald-300 border-emerald-500", targetRPE: 3, targetTime: 45, focus: "Recuperación Tisular", items: ["Movilidad Torácica/Cadera", "Liberación Miofascial", "Core Isométrico"] },
+            "MD-5": { name: "MD-5 / OFF", phaseLabel: "Descanso / Estructural", status: "🟩 Verde", badgeColor: "bg-slate-700 text-slate-300 border-slate-500", targetRPE: 0, targetTime: 0, focus: "Descanso Activo o Total", items: ["Descanso Total / Desconexión"] },
+            "MD-4": { name: "MD-4", phaseLabel: "Tensión", status: "🟨 Amarillo", badgeColor: "bg-yellow-900/50 text-yellow-300 border-yellow-500", targetRPE: 7, targetTime: 75, focus: "Fuerza e Hipertrofia", items: ["Extensiones de brazos (Empuje H.)", "Dominante de Cadera (Peso Muerto)", "Sentadilla Zercher"] },
+            "MD-3": { name: "MD-3", phaseLabel: "Extensión", status: "🔴 Rojo", badgeColor: "bg-red-900/50 text-red-300 border-red-500", targetRPE: 8, targetTime: 90, focus: "Capacidad Aeróbica / Área", items: ["Extensiones de brazos declinadas", "Dominadas Pronas (Tirón V.)", "Juegos Reducidos (Grandes)"] },
+            "MD-2": { name: "MD-2", phaseLabel: "Velocidad", status: "🟨 Amarillo", badgeColor: "bg-yellow-900/50 text-yellow-300 border-yellow-500", targetRPE: 6, targetTime: 60, focus: "Neuromuscular / Agilidad", items: ["Extensiones de brazos pliométricas", "Saltos Monopodales Vectoriales", "Sprint Corto (0-10m)"] },
+            "MD-1": { name: "MD-1", phaseLabel: "Activación", status: "🟩 Verde", badgeColor: "bg-emerald-900/50 text-emerald-300 border-emerald-500", targetRPE: 4, targetTime: 40, focus: "Tapering y Reacción", items: ["Activación Tríceps/Pectoral", "Lanzamientos Balón Medicinal", "Velocidad Reaccional"] }
         };
 
         let currentWeekData = [];
@@ -139,7 +127,7 @@
 
         function initApp() {
             populateCalcSelect();
-            generateWeek();
+            autoPlanWeek();
             setupCalcListeners();
         }
 
@@ -154,8 +142,10 @@
             });
         }
 
-        function generateWeek() {
+        function autoPlanWeek() {
             const mdIndex = parseInt(document.getElementById("matchDaySelect").value);
+            const goalMultiplier = document.getElementById("weekGoalSelect").value === "high" ? 1.15 : (document.getElementById("weekGoalSelect").value === "tapering" ? 0.8 : 1.0);
+            
             currentWeekData = [];
 
             for (let i = 0; i < 7; i++) {
@@ -168,50 +158,90 @@
                 else if (diff === -2 || diff === 5) phaseKey = "MD-2";
                 else if (diff === -3 || diff === 4) phaseKey = "MD-3";
                 else if (diff === -4 || diff === 3) phaseKey = "MD-4";
-                else phaseKey = "OFF";
+                else phaseKey = "MD-5";
 
                 const profile = mdProfiles[phaseKey];
+                const calcTargetUA = Math.round((profile.targetRPE * profile.targetTime) * goalMultiplier);
 
                 currentWeekData.push({
                     day: daysOfWeek[i],
-                    phase: profile.name,
+                    isMD: diff === 0,
+                    phaseKey: phaseKey,
+                    phaseLabel: profile.phaseLabel,
                     status: profile.status,
-                    color: profile.color,
+                    badgeColor: profile.badgeColor,
                     focus: profile.focus,
                     items: profile.items,
-                    targetUA: profile.targetUA,
+                    targetRPE: profile.targetRPE,
+                    targetTime: profile.targetTime,
+                    targetUA: calcTargetUA,
                     actualUA: 0
                 });
             }
 
-            renderTable();
+            renderCalendarGrid();
             renderChart();
+            syncInputWithSelectedDay();
         }
 
-        function renderTable() {
-            const tbody = document.getElementById("weekTableBody");
-            tbody.innerHTML = "";
+        function renderCalendarGrid() {
+            const container = document.getElementById("calendarGrid");
+            container.innerHTML = "";
 
-            currentWeekData.forEach((row, idx) => {
-                const tr = document.createElement("tr");
-                tr.className = "hover:bg-slate-750 transition-colors";
-                tr.innerHTML = `
-                    <td class="p-3 font-semibold text-white">${row.day}</td>
-                    <td class="p-3"><span class="px-2 py-1 text-xs rounded border font-mono ${row.color}">${row.phase}</span></td>
-                    <td class="p-3 font-semibold text-xs">${row.status}</td>
-                    <td class="p-3 text-slate-300">${row.focus}</td>
-                    <td class="p-3 text-slate-400 text-xs">${row.items.join(" • ")}</td>
-                    <td class="p-3 font-mono font-bold text-slate-300">${row.targetUA}</td>
-                    <td class="p-3 font-mono font-bold text-emerald-400" id="actual-ua-${idx}">${row.actualUA}</td>
+            currentWeekData.forEach((d, idx) => {
+                const card = document.createElement("div");
+                const isMatch = d.isMD;
+                
+                card.className = `rounded-xl border p-3 flex flex-col justify-between transition-all ${
+                    isMatch 
+                        ? 'bg-slate-800 border-red-500 ring-2 ring-red-500/50 shadow-lg shadow-red-950/50' 
+                        : 'bg-slate-800/80 border-slate-700 hover:border-slate-600'
+                }`;
+
+                card.innerHTML = `
+                    <div>
+                        <!-- Header de la Tarjeta -->
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="font-bold ${isMatch ? 'text-red-400 text-base' : 'text-slate-200 text-sm'}">${d.day}</span>
+                            <span class="text-[10px] px-2 py-0.5 rounded font-mono border ${d.badgeColor}">${d.phaseKey}</span>
+                        </div>
+                        
+                        <!-- Etiqueta de Partido / Enfoque -->
+                        <div class="mb-2">
+                            <span class="text-xs font-semibold ${isMatch ? 'text-red-300 font-bold uppercase tracking-wider block' : 'text-emerald-400 block'}">
+                                ${d.phaseLabel}
+                            </span>
+                            <span class="text-[11px] text-slate-400 block leading-tight mt-1">${d.focus}</span>
+                        </div>
+
+                        <!-- Lista de Elementos Biomecánicos Planificados -->
+                        <div class="my-3 pt-2 border-t border-slate-700/60">
+                            <span class="text-[10px] font-mono text-slate-400 uppercase block mb-1">Contenidos:</span>
+                            <ul class="space-y-1">
+                                ${d.items.map(item => `<li class="text-[11px] text-slate-300 leading-tight flex items-start"><span class="text-emerald-500 mr-1">•</span>${item}</li>`).join('')}
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Métricas UA de la Tarjeta -->
+                    <div class="mt-2 pt-2 border-t border-slate-700/60 font-mono flex justify-between items-end">
+                        <div>
+                            <span class="text-[9px] text-slate-400 block">OBJ. UA</span>
+                            <span class="text-xs font-bold text-slate-300">${d.targetUA}</span>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-[9px] text-slate-400 block">REAL UA</span>
+                            <span class="text-xs font-bold ${d.actualUA > 0 ? 'text-emerald-400' : 'text-slate-500'}">${d.actualUA}</span>
+                        </div>
+                    </div>
                 `;
-                tbody.appendChild(tr);
+                container.appendChild(card);
             });
         }
 
         function renderChart() {
             const ctx = document.getElementById('uaChart').getContext('2d');
-            
-            const labels = currentWeekData.map(d => `${d.day} (${d.phase})`);
+            const labels = currentWeekData.map(d => `${d.day} (${d.phaseKey})`);
             const targetData = currentWeekData.map(d => d.targetUA);
             const actualData = currentWeekData.map(d => d.actualUA);
 
@@ -227,14 +257,14 @@
                         {
                             label: 'UA Objetivo',
                             data: targetData,
-                            backgroundColor: 'rgba(51, 65, 85, 0.7)',
+                            backgroundColor: 'rgba(51, 65, 85, 0.8)',
                             borderColor: 'rgba(100, 116, 139, 1)',
                             borderWidth: 1
                         },
                         {
                             label: 'UA Real',
                             data: actualData,
-                            backgroundColor: 'rgba(16, 185, 129, 0.7)',
+                            backgroundColor: 'rgba(16, 185, 129, 0.8)',
                             borderColor: 'rgba(16, 185, 129, 1)',
                             borderWidth: 1
                         }
@@ -244,19 +274,10 @@
                     responsive: true,
                     maintainAspectRatio: false,
                     scales: {
-                        y: {
-                            beginAtZero: true,
-                            grid: { color: '#334155' },
-                            ticks: { color: '#94a3b8' }
-                        },
-                        x: {
-                            grid: { color: '#334155' },
-                            ticks: { color: '#94a3b8' }
-                        }
+                        y: { beginAtZero: true, grid: { color: '#334155' }, ticks: { color: '#94a3b8' } },
+                        x: { grid: { color: '#334155' }, ticks: { color: '#94a3b8' } }
                     },
-                    plugins: {
-                        legend: { labels: { color: '#f8fafc' } }
-                    }
+                    plugins: { legend: { labels: { color: '#f8fafc' } } }
                 }
             });
         }
@@ -275,15 +296,32 @@
             time.addEventListener("input", updateCalc);
         }
 
+        function syncInputWithSelectedDay() {
+            const dayIdx = parseInt(document.getElementById("calcDaySelect").value);
+            const data = currentWeekData[dayIdx];
+            
+            document.getElementById("rpeInput").value = data.targetRPE;
+            document.getElementById("timeInput").value = data.targetTime;
+            document.getElementById("calculatedUA").textContent = `${data.targetRPE * data.targetTime} UA`;
+        }
+
         function logSession() {
             const dayIdx = parseInt(document.getElementById("calcDaySelect").value);
             const rpe = parseInt(document.getElementById("rpeInput").value) || 0;
             const time = parseInt(document.getElementById("timeInput").value) || 0;
             
-            const ua = rpe * time;
-            currentWeekData[dayIdx].actualUA = ua;
-            
-            document.getElementById(`actual-ua-${dayIdx}`).textContent = ua;
+            currentWeekData[dayIdx].actualUA = rpe * time;
+            renderCalendarGrid();
+            renderChart();
+        }
+
+        function simulateAllRealUA() {
+            currentWeekData.forEach(d => {
+                // Simulación con ligera variación fisiológica (+/- 10%)
+                const factor = d.targetUA === 0 ? 0 : (0.95 + Math.random() * 0.1);
+                d.actualUA = Math.round(d.targetUA * factor);
+            });
+            renderCalendarGrid();
             renderChart();
         }
 
