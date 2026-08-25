@@ -3,502 +3,291 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CalcuPlan Pro - Gestión Nutricional Avanzada</title>
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        body { font-family: 'Inter', sans-serif; }
-    </style>
+    <title>Planificador Físico & Control de Carga (UA)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-<body class="bg-slate-900 text-slate-100 min-h-screen">
+<body class="bg-slate-900 text-slate-100 min-h-screen p-4 md:p-8 font-sans">
 
-    <div class="max-w-4xl mx-auto p-4 sm:p-6">
+    <div class="max-w-7xl mx-auto space-y-6">
+        
         <!-- Header -->
-        <header class="flex justify-between items-center mb-6 border-b border-slate-800 pb-4">
+        <header class="border-b border-slate-700 pb-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
-                <h1 class="text-2xl font-bold tracking-tight text-emerald-400">CalcuPlan Pro</h1>
-                <p class="text-xs text-slate-400">Control Metabólico, Planificación por Comidas y Restricciones</p>
+                <h1 class="text-3xl font-bold text-emerald-400">Control de Carga & Microciclo Específico</h1>
+                <p class="text-slate-400 text-sm">Monitoreo biomecánico y cuantificación mediante Unidades Arbitrarias (UA)</p>
             </div>
-            <div class="text-right">
-                <span id="current-date" class="text-xs font-medium text-slate-400"></span>
+            <div class="bg-slate-800 p-3 rounded-lg border border-slate-700">
+                <span class="text-xs text-slate-400 font-mono block">Fórmula de Carga Interna:</span>
+                <span class="text-emerald-400 font-bold font-mono">UA = sRPE (1-10) × Tiempo (min)</span>
             </div>
         </header>
 
-        <!-- Navegación por pestañas -->
-        <div class="flex flex-wrap gap-2 mb-6 border-b border-slate-800 pb-2">
-            <button onclick="switchTab('calculadora')" id="tab-calculadora" class="px-3 py-2 text-xs sm:text-sm font-semibold rounded-lg bg-emerald-600 text-white transition">1. TDEE & Metas</button>
-            <button onclick="switchTab('planificador')" id="tab-planificador" class="px-3 py-2 text-xs sm:text-sm font-semibold rounded-lg text-slate-400 hover:bg-slate-800 transition">2. Plan de Comidas</button>
-            <button onclick="switchTab('menu')" id="tab-menu" class="px-3 py-2 text-xs sm:text-sm font-semibold rounded-lg text-slate-400 hover:bg-slate-800 transition">3. Diario Nutricional</button>
-            <button onclick="switchTab('alimentos')" id="tab-alimentos" class="px-3 py-2 text-xs sm:text-sm font-semibold rounded-lg text-slate-400 hover:bg-slate-800 transition">4. Base & Restricciones</button>
+        <!-- Panel de Configuración -->
+        <section class="bg-slate-800 p-6 rounded-xl border border-slate-700 grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div>
+                <label class="block text-sm font-medium text-slate-300 mb-2">Día de Partido (Match Day - MD)</label>
+                <select id="matchDaySelect" class="w-full bg-slate-900 border border-slate-600 rounded-lg p-2.5 text-white focus:ring-2 focus:ring-emerald-500">
+                    <option value="0">Lunes</option>
+                    <option value="1">Martes</option>
+                    <option value="2">Miércoles</option>
+                    <option value="3">Jueves</option>
+                    <option value="4">Viernes</option>
+                    <option value="5" selected>Sábado</option>
+                    <option value="6">Domingo</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-slate-300 mb-2">Criterio de Programación Auto</label>
+                <select id="criteriaSelect" class="w-full bg-slate-900 border border-slate-600 rounded-lg p-2.5 text-white focus:ring-2 focus:ring-emerald-500">
+                    <option value="target">Objetivo de UA</option>
+                    <option value="time">Tiempo Disponible (min)</option>
+                </select>
+            </div>
+            <div class="flex items-end">
+                <button onclick="generateWeek()" class="w-full bg-emerald-600 hover:bg-emerald-500 font-bold py-2.5 px-4 rounded-lg transition duration-200 shadow-lg shadow-emerald-900/40">
+                    Generar Semana de Trabajo
+                </button>
+            </div>
+        </section>
+
+        <!-- Visualización Gráfica y Dashboard -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            <!-- Gráfico UA -->
+            <div class="lg:col-span-2 bg-slate-800 p-6 rounded-xl border border-slate-700">
+                <h2 class="text-xl font-semibold mb-4 text-emerald-400">Ondulación Semanal de UA (Objetivo vs Real)</h2>
+                <div class="h-64">
+                    <canvas id="uaChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Registro RPE / Calculadora sRPE -->
+            <div class="bg-slate-800 p-6 rounded-xl border border-slate-700 flex flex-col justify-between">
+                <div>
+                    <h2 class="text-xl font-semibold mb-3 text-emerald-400">Calculadora sRPE del Día</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-xs text-slate-400">Día a registrar</label>
+                            <select id="calcDaySelect" class="w-full bg-slate-900 border border-slate-600 rounded p-2 text-sm text-white"></select>
+                        </div>
+                        <div>
+                            <label class="block text-xs text-slate-400">RPE Observado / Percibido (1-10)</label>
+                            <input type="number" id="rpeInput" min="1" max="10" value="7" class="w-full bg-slate-900 border border-slate-600 rounded p-2 text-sm text-white">
+                        </div>
+                        <div>
+                            <label class="block text-xs text-slate-400">Duración Efectiva (minutos)</label>
+                            <input type="number" id="timeInput" min="10" max="180" value="60" class="w-full bg-slate-900 border border-slate-600 rounded p-2 text-sm text-white">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-4 pt-4 border-t border-slate-700">
+                    <div class="flex justify-between items-center mb-3">
+                        <span class="text-sm font-medium">Carga Calculada:</span>
+                        <span id="calculatedUA" class="text-2xl font-bold font-mono text-emerald-400">420 UA</span>
+                    </div>
+                    <button onclick="logSession()" class="w-full bg-slate-700 hover:bg-slate-600 font-semibold py-2 px-4 rounded text-sm">
+                        Cargar Carga Real al Día
+                    </button>
+                </div>
+            </div>
+
         </div>
 
-        <!-- SECCIÓN 1: TDEE y METAS -->
-        <section id="section-calculadora" class="space-y-6">
-            <div class="bg-slate-800/60 p-6 rounded-2xl border border-slate-700/50 shadow-xl">
-                <h2 class="text-lg font-semibold mb-4 text-emerald-400">Calculadora de Gasto Energético (Mifflin-St Jeor)</h2>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-medium text-slate-300 mb-1">Género</label>
-                        <select id="calc-genero" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-sm">
-                            <option value="masculino">Masculino</option>
-                            <option value="femenino">Femenino</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-medium text-slate-300 mb-1">Peso (kg)</label>
-                        <input type="number" id="calc-peso" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-sm" placeholder="Ej: 75">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-medium text-slate-300 mb-1">Altura (cm)</label>
-                        <input type="number" id="calc-altura" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-sm" placeholder="Ej: 175">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-medium text-slate-300 mb-1">Edad (años)</label>
-                        <input type="number" id="calc-edad" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-sm" placeholder="Ej: 28">
-                    </div>
-                    <div class="sm:col-span-2">
-                        <label class="block text-xs font-medium text-slate-300 mb-1">Nivel de Actividad Física</label>
-                        <select id="calc-actividad" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-sm">
-                            <option value="1.2">Sedentario (Poco o nada de ejercicio)</option>
-                            <option value="1.375">Ligero (Ejercicio 1-3 veces/semana)</option>
-                            <option value="1.55">Moderado (Ejercicio 3-5 veces/semana)</option>
-                            <option value="1.725">Fuerte (Ejercicio 6-7 veces/semana)</option>
-                            <option value="1.9">Atleta / Muy activo (Entrenamiento diario intenso)</option>
-                        </select>
-                    </div>
-                </div>
-                <button onclick="calcularTDEE()" class="mt-5 w-full bg-emerald-600 hover:bg-emerald-500 font-semibold text-sm p-3 rounded-lg transition shadow-lg">Calcular Mis Requerimientos</button>
-            </div>
-
-            <div id="resultado-tdee" class="hidden bg-emerald-950/40 border border-emerald-800/60 p-6 rounded-2xl">
-                <h3 class="text-md font-semibold text-emerald-300 mb-2">Tus Resultados Estimados:</h3>
-                <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
-                    <div class="bg-slate-900/50 p-3 rounded-xl border border-slate-800">
-                        <span class="block text-xs text-slate-400">Basal (BMR)</span>
-                        <span id="res-bmr" class="text-lg font-bold text-slate-100">-</span>
-                    </div>
-                    <div class="bg-slate-900/50 p-3 rounded-xl border border-slate-800">
-                        <span class="block text-xs text-slate-400">Mantenimiento (TDEE)</span>
-                        <span id="res-tdee" class="text-lg font-bold text-emerald-400">-</span>
-                    </div>
-                    <div class="bg-slate-900/50 p-3 rounded-xl border border-slate-800">
-                        <span class="block text-xs text-slate-400">Definición (-20%)</span>
-                        <span id="res-deficit" class="text-lg font-bold text-amber-400">-</span>
-                    </div>
-                    <div class="bg-slate-900/50 p-3 rounded-xl border border-slate-800">
-                        <span class="block text-xs text-slate-400">Volumen (+15%)</span>
-                        <span id="res-volumen" class="text-lg font-bold text-blue-400">-</span>
-                    </div>
-                </div>
+        <!-- Tabla Estructurada Semanal -->
+        <section class="bg-slate-800 p-6 rounded-xl border border-slate-700">
+            <h2 class="text-xl font-semibold mb-4 text-emerald-400">Plan de Trabajo Semanal</h2>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="border-b border-slate-700 text-xs uppercase text-slate-400 font-mono">
+                            <th class="p-3">Día</th>
+                            <th class="p-3">Fase MD</th>
+                            <th class="p-3">Semáforo</th>
+                            <th class="p-3">Enfoque Fisiológico</th>
+                            <th class="p-3">Elementos y Patrones Biomecánicos</th>
+                            <th class="p-3">UA Obj.</th>
+                            <th class="p-3">UA Real</th>
+                        </tr>
+                    </thead>
+                    <tbody id="weekTableBody" class="divide-y divide-slate-700 text-sm">
+                        <!-- Generación Dinámica -->
+                    </tbody>
+                </table>
             </div>
         </section>
 
-        <!-- SECCIÓN 2: PLANIFICADOR POR COMIDAS -->
-        <section id="section-planificador" class="hidden space-y-6">
-            <div class="bg-slate-800/60 p-6 rounded-2xl border border-slate-700/50">
-                <h2 class="text-lg font-semibold mb-3 text-emerald-400">Estrategia de Comidas Diarias</h2>
-                <p class="text-xs text-slate-400 mb-4">Define cuántas ingestas realizarás al día para fraccionar tus calorías y objetivos nutricionales de forma equilibrada.</p>
-                
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-                    <div>
-                        <label class="block text-xs font-medium text-slate-300 mb-1">Cantidad de Comidas Diarias</label>
-                        <select id="plan-num-comidas" onchange="actualizarPlanificador()" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-sm">
-                            <option value="3">3 Comidas (Desayuno, Almuerzo, Cena)</option>
-                            <option value="4">4 Comidas (Desayuno, Almuerzo, Merienda, Cena)</option>
-                            <option value="5" selected>5 Comidas (Incluye Colación / Media Mañana)</option>
-                            <option value="6">6 Comidas (Fraccionamiento Alto)</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-medium text-slate-300 mb-1">Meta Calórica de Referencia</label>
-                        <input type="number" id="plan-meta-kcal" value="2000" oninput="actualizarPlanificador()" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-sm">
-                    </div>
-                </div>
-                
-                <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 mb-4">
-                    <span class="text-xs text-slate-400 block mb-1">Distribución estimada por cada comida:</span>
-                    <span id="info-porcion-comida" class="text-sm font-bold text-emerald-400">-</span>
-                </div>
-            </div>
-
-            <!-- Sugerencias de Alimentos Filtrados por Restricciones -->
-            <div class="bg-slate-800/60 p-6 rounded-2xl border border-slate-700/50">
-                <h3 class="text-md font-semibold mb-3 text-slate-200">Alimentos Aptos para tu Plan (Excluyendo Restricciones)</h3>
-                <div id="contenedor-sugeridos" class="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-72 overflow-y-auto pr-2">
-                    <!-- Inyectado dinámicamente -->
-                </div>
-            </div>
-        </section>
-
-        <!-- SECCIÓN 3: REGISTRO DIARIO Y MENÚ -->
-        <section id="section-menu" class="hidden space-y-6">
-            <div class="bg-slate-800/60 p-6 rounded-2xl border border-slate-700/50">
-                <h2 class="text-lg font-semibold mb-3 text-emerald-400">Consumo de Hoy vs Meta</h2>
-                <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
-                    <div class="bg-slate-900 p-3 rounded-xl text-center border border-slate-800">
-                        <span class="text-xs text-slate-400 block">Calorías</span>
-                        <span id="stat-kcal" class="text-xl font-bold">0</span> <span class="text-xs text-slate-500">/ <span id="meta-kcal">2000</span> kcal</span>
-                    </div>
-                    <div class="bg-slate-900 p-3 rounded-xl text-center border border-slate-800">
-                        <span class="text-xs text-slate-400 block">Proteínas</span>
-                        <span id="stat-prot" class="text-xl font-bold text-blue-400">0</span> <span class="text-xs text-slate-500">g</span>
-                    </div>
-                    <div class="bg-slate-900 p-3 rounded-xl text-center border border-slate-800">
-                        <span class="text-xs text-slate-400 block">Carbohidratos</span>
-                        <span id="stat-carb" class="text-xl font-bold text-amber-400">0</span> <span class="text-xs text-slate-500">g</span>
-                    </div>
-                    <div class="bg-slate-900 p-3 rounded-xl text-center border border-slate-800">
-                        <span class="text-xs text-slate-400 block">Grasas</span>
-                        <span id="stat-gras" class="text-xl font-bold text-rose-400">0</span> <span class="text-xs text-slate-500">g</span>
-                    </div>
-                </div>
-                <button onclick="reiniciarDia()" class="text-xs text-rose-400 hover:text-rose-300 underline font-medium">Reiniciar consumo diario</button>
-            </div>
-
-            <div class="bg-slate-800/60 p-6 rounded-2xl border border-slate-700/50">
-                <h3 class="text-md font-semibold mb-4 text-slate-200">Registrar Alimento al Menú</h3>
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div>
-                        <label class="block text-xs font-medium text-slate-300 mb-1">Comida / Momento</label>
-                        <select id="log-comida" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-sm">
-                            <option value="Desayuno">Desayuno</option>
-                            <option value="Media Mañana">Media Mañana</option>
-                            <option value="Almuerzo">Almuerzo</option>
-                            <option value="Merienda">Merienda</option>
-                            <option value="Cena">Cena</option>
-                            <option value="Colación">Colación Nocturna</option>
-                        </select>
-                    </div>
-                    <div class="sm:col-span-2">
-                        <label class="block text-xs font-medium text-slate-300 mb-1">Seleccionar Alimento Aptos (por 100g)</label>
-                        <select id="log-alimento" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-sm"></select>
-                    </div>
-                    <div class="sm:col-span-2">
-                        <label class="block text-xs font-medium text-slate-300 mb-1">Cantidad (en gramos o mililitros)</label>
-                        <input type="number" id="log-cantidad" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-sm" value="100" placeholder="Ej: 150">
-                    </div>
-                    <div class="flex items-end">
-                        <button onclick="agregarAlDiario()" class="w-full bg-emerald-600 hover:bg-emerald-500 font-semibold text-sm p-2.5 rounded-lg transition">Sumar al Menú</button>
-                    </div>
-                </div>
-            </div>
-
-            <div class="bg-slate-800/60 p-6 rounded-2xl border border-slate-700/50">
-                <h3 class="text-md font-semibold mb-4 text-slate-200">Alimentos Registrados Hoy</h3>
-                <div id="lista-diario" class="space-y-2">
-                    <p class="text-xs text-slate-500">No hay alimentos registrados todavía en el día.</p>
-                </div>
-            </div>
-        </section>
-
-        <!-- SECCIÓN 4: BASE DE DATOS Y RESTRICCIONES -->
-        <section id="section-alimentos" class="hidden space-y-6">
-            <div class="bg-slate-800/60 p-6 rounded-2xl border border-slate-700/50">
-                <h2 class="text-lg font-semibold mb-4 text-emerald-400">Agregar Alimento Manualmente</h2>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div class="sm:col-span-2">
-                        <label class="block text-xs font-medium text-slate-300 mb-1">Nombre del Alimento o Marca</label>
-                        <input type="text" id="nuevo-nombre" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-sm" placeholder="Ej: Fideos marca X / Alfajor artesanal">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-medium text-slate-300 mb-1">Calorías (kcal / 100g)</label>
-                        <input type="number" id="nuevo-kcal" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-sm" placeholder="Ej: 250">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-medium text-slate-300 mb-1">Proteínas (g / 100g)</label>
-                        <input type="number" id="nuevo-prot" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-sm" placeholder="Ej: 12">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-medium text-slate-300 mb-1">Carbohidratos (g / 100g)</label>
-                        <input type="number" id="nuevo-carb" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-sm" placeholder="Ej: 45">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-medium text-slate-300 mb-1">Grasas (g / 100g)</label>
-                        <input type="number" id="nuevo-gras" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-sm" placeholder="Ej: 8">
-                    </div>
-                </div>
-                <button onclick="guardarNuevoAlimento()" class="mt-5 w-full bg-emerald-600 hover:bg-emerald-500 font-semibold text-sm p-3 rounded-lg transition shadow-lg">Guardar en la Base</button>
-            </div>
-
-            <!-- Gestión de Restricciones / Lista de Exclusión -->
-            <div class="bg-slate-800/60 p-6 rounded-2xl border border-slate-700/50">
-                <h3 class="text-md font-semibold mb-2 text-rose-400">Restricción de Alimentos (Lista Negra)</h3>
-                <p class="text-xs text-slate-400 mb-4">Selecciona los alimentos que deseas **restringir u ocultar** de tus sugerencias de planificación y listados activos.</p>
-                <div id="contenedor-restricciones" class="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-60 overflow-y-auto bg-slate-900 p-4 rounded-xl border border-slate-800">
-                    <!-- Inyectado dinámicamente -->
-                </div>
-            </div>
-        </section>
     </div>
 
     <script>
-        const alimentosBaseIniciales = [
-            { nombre: "Pechuga de Pollo (sin piel)", kcal: 165, prot: 31, carb: 0, gras: 3.6 },
-            { nombre: "Cuadrada (Vacuno Magro)", kcal: 138, prot: 21.5, carb: 0, gras: 5.4 },
-            { nombre: "Filet de Merluza", kcal: 82, prot: 17.5, carb: 0, gras: 1.2 },
-            { nombre: "Atún en lata al agua", kcal: 105, prot: 24, carb: 0, gras: 1 },
-            { nombre: "Huevo Entero (unidad ~50g)", kcal: 72, prot: 6.3, carb: 0.4, gras: 4.8 },
-            { nombre: "Queso Port Salut Light", kcal: 215, prot: 25, carb: 1, gras: 12 },
-            { nombre: "Leche Descremada", kcal: 36, prot: 3.2, carb: 5, gras: 0.1 },
-            { nombre: "Yogur Descremado Saborizado", kcal: 48, prot: 4.2, carb: 7.5, gras: 0.1 },
-            { nombre: "Arroz Blanco (Cocido)", kcal: 130, prot: 2.7, carb: 28, gras: 0.3 },
-            { nombre: "Fideos de Sémola (Cocidos)", kcal: 138, prot: 4.5, carb: 25, gras: 1.1 },
-            { nombre: "Avena Arrollada", kcal: 367, prot: 13, carb: 66, gras: 7 },
-            { nombre: "Papa (Hervida/Al horno)", kcal: 87, prot: 1.9, carb: 20, gras: 0.1 },
-            { nombre: "Batata (Hervida/Al horno)", kcal: 86, prot: 1.6, carb: 20, gras: 0.1 },
-            { nombre: "Lentejas (Cocidas)", kcal: 116, prot: 9, carb: 20, gras: 0.4 },
-            { nombre: "Acelga (Cocida)", kcal: 20, prot: 2.1, carb: 3.8, gras: 0.2 },
-            { nombre: "Tomate Redondo", kcal: 18, prot: 0.9, carb: 3.9, gras: 0.2 },
-            { nombre: "Banana", kcal: 89, prot: 1.1, carb: 22.8, gras: 0.3 },
-            { nombre: "Manzana", kcal: 52, prot: 0.3, carb: 13.8, gras: 0.2 },
-            { nombre: "Aceite de Oliva / Girasol", kcal: 884, prot: 0, carb: 0, gras: 100 },
-            { nombre: "Palta (Aguacate)", kcal: 160, prot: 2, carb: 8.5, gras: 14.7 },
-            { nombre: "Mate (Infusión)", kcal: 2, prot: 0.1, carb: 0.4, gras: 0 },
-            { nombre: "Agua Saborizada Zero", kcal: 0, prot: 0, carb: 0, gras: 0 }
-        ];
+        const daysOfWeek = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
+        
+        // Estructura de plantilla según fase MD
+        const mdProfiles = {
+            "MD": { name: "MD", color: "bg-red-500/20 text-red-400 border-red-500/30", targetUA: 850, focus: "Competencia / Máxima Exigencia", items: ["Activación Neural", "Táctica Alta Intensidad", "Sprint Específico"], status: "🔴 Rojo" },
+            "MD+1": { name: "MD+1", color: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30", targetUA: 200, focus: "Regenerativo y Movilidad", items: ["Libertad Tisular", "Movilidad Torácica/Cadera", "Core Isométrico"], status: "🟩 Verde" },
+            "MD-4": { name: "MD-4", color: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30", targetUA: 500, focus: "Tensión y Fuerza Estructural", items: ["Extensiones de brazos (Empuje H.)", "Dominante Cadera (Peso Muerto)", "Sentadilla Zercher"], status: "🟨 Amarillo" },
+            "MD-3": { name: "MD-3", color: "bg-red-500/20 text-red-400 border-red-500/30", targetUA: 700, focus: "Extensión y Resistencia Específica", items: ["Dominada Pronom (Tirón V.)", "Extensiones de brazos declinadas", "Aceleraciones Intermitentes"], status: "🟥 Rojo" },
+            "MD-2": { name: "MD-2", color: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30", targetUA: 350, focus: "Velocidad y Agilidad Neuromuscular", items: ["Saltos Monopodales", "Extensiones de brazos plio", "Sprint Corto (0-10m)"], status: "🟨 Amarillo" },
+            "MD-1": { name: "MD-1", color: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30", targetUA: 150, focus: "Tapering y Potencia Reactiva", items: ["Lanzamiento Balón Medicional", "Activación del Tríceps/Pectoral", "Coordinación"], status: "🟩 Verde" },
+            "OFF": { name: "Descanso", color: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30", targetUA: 0, focus: "Recuperación Total", items: ["Descanso Activo / Pasivo"], status: "🟩 Verde" }
+        };
 
-        let alimentos = JSON.parse(localStorage.getItem('calcuplan_alimentos')) || alimentosBaseIniciales;
-        let diario = JSON.parse(localStorage.getItem('calcuplan_diario')) || [];
-        let restricciones = JSON.parse(localStorage.getItem('calcuplan_restricciones')) || [];
-        let metaCaloriasGlobal = localStorage.getItem('calcuplan_meta') || 2000;
+        let currentWeekData = [];
+        let uaChartInstance = null;
 
-        document.getElementById('current-date').innerText = new Date().toLocaleDateString('es-AR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-        document.getElementById('meta-kcal').innerText = metaCaloriasGlobal;
-        document.getElementById('plan-meta-kcal').value = metaCaloriasGlobal;
-
-        function switchTab(tab) {
-            ['calculadora', 'planificador', 'menu', 'alimentos'].forEach(t => {
-                document.getElementById(`section-${t}`).classList.add('hidden');
-                document.getElementById(`tab-${t}`).className = "px-3 py-2 text-xs sm:text-sm font-semibold rounded-lg text-slate-400 hover:bg-slate-800 transition";
-            });
-            document.getElementById(`section-${tab}`).classList.remove('hidden');
-            document.getElementById(`tab-${tab}`).className = "px-3 py-2 text-xs sm:text-sm font-semibold rounded-lg bg-emerald-600 text-white transition";
-            
-            if(tab === 'planificador') actualizarPlanificador();
+        function initApp() {
+            populateCalcSelect();
+            generateWeek();
+            setupCalcListeners();
         }
 
-        function calcularTDEE() {
-            const genero = document.getElementById('calc-genero').value;
-            const peso = parseFloat(document.getElementById('calc-peso').value);
-            const altura = parseFloat(document.getElementById('calc-altura').value);
-            const edad = parseInt(document.getElementById('calc-edad').value);
-            const actividad = parseFloat(document.getElementById('calc-actividad').value);
-
-            if (!peso || !altura || !edad) {
-                alert("Por favor completa peso, altura y edad.");
-                return;
-            }
-
-            let bmr = (10 * peso) + (6.25 * altura) - (5 * edad);
-            bmr = (genero === 'masculino') ? bmr + 5 : bmr - 161;
-
-            const tdee = Math.round(bmr * actividad);
-            const deficit = Math.round(tdee * 0.80);
-            const volumen = Math.round(tdee * 1.15);
-
-            document.getElementById('res-bmr').innerText = Math.round(bmr) + " kcal";
-            document.getElementById('res-tdee').innerText = tdee + " kcal";
-            document.getElementById('res-deficit').innerText = deficit + " kcal";
-            document.getElementById('res-volumen').innerText = volumen + " kcal";
-
-            metaCaloriasGlobal = tdee;
-            localStorage.setItem('calcuplan_meta', metaCaloriasGlobal);
-            document.getElementById('meta-kcal').innerText = metaCaloriasGlobal;
-            document.getElementById('plan-meta-kcal').value = metaCaloriasGlobal;
-            document.getElementById('resultado-tdee').classList.remove('hidden');
-        }
-
-        function actualizarPlanificador() {
-            const numComidas = parseInt(document.getElementById('plan-num-comidas').value);
-            const metaKcal = parseFloat(document.getElementById('plan-meta-kcal').value) || 2000;
-            const kcalPorComida = Math.round(metaKcal / numComidas);
-
-            document.getElementById('info-porcion-comida').innerText = `Aprox. ${kcalPorComida} kcal por cada una de las ${numComidas} comidas diarias.`;
-
-            // Renderizar alimentos aptos (no restringidos)
-            const contenedor = document.getElementById('contenedor-sugeridos');
-            contenedor.innerHTML = '';
-            
-            const alimentosAptos = alimentos.filter(item => !restricciones.includes(item.nombre));
-            
-            if(alimentosAptos.length === 0) {
-                contenedor.innerHTML = `<p class="text-xs text-slate-500">Todos los alimentos están restringidos o no hay disponibles.</p>`;
-                return;
-            }
-
-            alimentosAptos.forEach(item => {
-                let div = document.createElement('div');
-                div.className = "bg-slate-900 p-3 rounded-xl border border-slate-800 text-xs flex justify-between items-center";
-                div.innerHTML = `
-                    <div>
-                        <span class="font-medium text-slate-200 block">${item.nombre}</span>
-                        <span class="text-emerald-400 font-semibold">${item.kcal} kcal/100g</span>
-                    </div>
-                    <div class="space-x-1 text-[10px]">
-                        <span class="text-blue-400">P:${item.prot}g</span>
-                        <span class="text-amber-400">C:${item.carb}g</span>
-                        <span class="text-rose-400">G:${item.gras}g</span>
-                    </div>
-                `;
-                contenedor.appendChild(div);
-            });
-        }
-
-        function actualizarSelectAlimentos() {
-            const select = document.getElementById('log-alimento');
-            select.innerHTML = '';
-            const alimentosAptos = alimentos.filter(item => !restricciones.includes(item.nombre));
-            
-            alimentosAptos.forEach((item) => {
-                let opt = document.createElement('option');
-                opt.value = item.nombre; // guardamos por nombre para filtrar seguro
-                opt.text = `${item.nombre} (${item.kcal} kcal / 100g)`;
+        function populateCalcSelect() {
+            const select = document.getElementById("calcDaySelect");
+            select.innerHTML = "";
+            daysOfWeek.forEach((day, index) => {
+                const opt = document.createElement("option");
+                opt.value = index;
+                opt.textContent = day;
                 select.appendChild(opt);
             });
         }
 
-        function actualizarRestriccionesUI() {
-            const contenedor = document.getElementById('contenedor-restricciones');
-            contenedor.innerHTML = '';
+        function generateWeek() {
+            const mdIndex = parseInt(document.getElementById("matchDaySelect").value);
+            currentWeekData = [];
 
-            alimentos.forEach(item => {
-                const estaRestringido = restricciones.includes(item.nombre);
-                let label = document.createElement('label');
-                label.className = "flex items-center space-x-2 text-xs cursor-pointer p-1.5 hover:bg-slate-800/50 rounded";
-                label.innerHTML = `
-                    <input type="checkbox" ${estaRestringido ? 'checked' : ''} onchange="toggleRestriccion('${item.nombre.replace(/'/g, "\\'")}')" class="rounded bg-slate-900 border-slate-700 text-emerald-600 focus:ring-0">
-                    <span class="${estaRestringido ? 'line-through text-slate-500' : 'text-slate-300'}">${item.nombre}</span>
-                `;
-                contenedor.appendChild(label);
-            });
-        }
+            for (let i = 0; i < 7; i++) {
+                let diff = i - mdIndex;
+                let phaseKey = "";
+                
+                if (diff === 0) phaseKey = "MD";
+                else if (diff === 1 || diff === -6) phaseKey = "MD+1";
+                else if (diff === -1 || diff === 6) phaseKey = "MD-1";
+                else if (diff === -2 || diff === 5) phaseKey = "MD-2";
+                else if (diff === -3 || diff === 4) phaseKey = "MD-3";
+                else if (diff === -4 || diff === 3) phaseKey = "MD-4";
+                else phaseKey = "OFF";
 
-        function toggleRestriccion(nombreAlimento) {
-            if (restricciones.includes(nombreAlimento)) {
-                restricciones = restricciones.filter(n => n !== nombreAlimento);
-            } else {
-                restricciones.push(nombreAlimento);
-            }
-            localStorage.setItem('calcuplan_restricciones', JSON.stringify(restricciones));
-            actualizarRestriccionesUI();
-            actualizarSelectAlimentos();
-            actualizarPlanificador();
-        }
+                const profile = mdProfiles[phaseKey];
 
-        function guardarNuevoAlimento() {
-            const nombre = document.getElementById('nuevo-nombre').value.trim();
-            const kcal = parseFloat(document.getElementById('nuevo-kcal').value);
-            const prot = parseFloat(document.getElementById('nuevo-prot').value);
-            const carb = parseFloat(document.getElementById('nuevo-carb').value);
-            const gras = parseFloat(document.getElementById('nuevo-gras').value);
-
-            if (!nombre || isNaN(kcal) || isNaN(prot) || isNaN(carb) || isNaN(gras)) {
-                alert("Completa todos los campos correctamente.");
-                return;
-            }
-
-            alimentos.push({ nombre, kcal, prot, carb, gras });
-            localStorage.setItem('calcuplan_alimentos', JSON.stringify(alimentos));
-            
-            document.getElementById('nuevo-nombre').value = '';
-            document.getElementById('nuevo-kcal').value = '';
-            document.getElementById('nuevo-prot').value = '';
-            document.getElementById('nuevo-carb').value = '';
-            document.getElementById('nuevo-gras').value = '';
-
-            actualizarSelectAlimentos();
-            actualizarRestriccionesUI();
-            alert("¡Alimento guardado con éxito!");
-        }
-
-        function agregarAlDiario() {
-            const nombreAlimento = document.getElementById('log-alimento').value;
-            const cantidad = parseFloat(document.getElementById('log-cantidad').value);
-            const momento = document.getElementById('log-comida').value;
-
-            if (!nombreAlimento || isNaN(cantidad) || cantidad <= 0) {
-                alert("Selecciona un alimento y una cantidad válida.");
-                return;
-            }
-
-            const alimentoSeleccionado = alimentos.find(i => i.nombre === nombreAlimento);
-            const factor = cantidad / 100;
-
-            const itemDiario = {
-                momento,
-                nombre: alimentoSeleccionado.nombre,
-                cantidad,
-                kcal: Math.round(alimentoSeleccionado.kcal * factor),
-                prot: +(alimentoSeleccionado.prot * factor).toFixed(1),
-                carb: +(alimentoSeleccionado.carb * factor).toFixed(1),
-                gras: +(alimentoSeleccionado.gras * factor).toFixed(1)
-            };
-
-            diario.push(itemDiario);
-            localStorage.setItem('calcuplan_diario', JSON.stringify(diario));
-            renderDiario();
-        }
-
-        function eliminarItemDiario(index) {
-            diario.splice(index, 1);
-            localStorage.setItem('calcuplan_diario', JSON.stringify(diario));
-            renderDiario();
-        }
-
-        function reiniciarDia() {
-            if (confirm("¿Estás seguro de vaciar el registro diario?")) {
-                diario = [];
-                localStorage.removeItem('calcuplan_diario');
-                renderDiario();
-            }
-        }
-
-        function renderDiario() {
-            const contenedor = document.getElementById('lista-diario');
-            contenedor.innerHTML = '';
-
-            let totalKcal = 0, totalProt = 0, totalCarb = 0, totalGras = 0;
-
-            if (diario.length === 0) {
-                contenedor.innerHTML = `<p class="text-xs text-slate-500">No hay alimentos registrados todavía en el día.</p>`;
-            } else {
-                diario.forEach((item, index) => {
-                    totalKcal += item.kcal;
-                    totalProt += item.prot;
-                    totalCarb += item.carb;
-                    totalGras += item.gras;
-
-                    let div = document.createElement('div');
-                    div.className = "flex justify-between items-center bg-slate-900 p-3 rounded-xl border border-slate-800 text-xs";
-                    div.innerHTML = `
-                        <div>
-                            <span class="text-emerald-400 font-semibold">[${item.momento}]</span> 
-                            <span class="font-medium text-slate-200">${item.nombre}</span> 
-                            <span class="text-slate-400">(${item.cantidad}g/ml)</span>
-                        </div>
-                        <div class="flex items-center space-x-3">
-                            <span class="text-slate-300 font-bold">${item.kcal} kcal</span>
-                            <span class="text-blue-400">P:${item.prot}g</span>
-                            <span class="text-amber-400">C:${item.carb}g</span>
-                            <span class="text-rose-400">G:${item.gras}g</span>
-                            <button onclick="eliminarItemDiario(${index})" class="text-rose-500 hover:text-rose-400 font-bold px-1">✕</button>
-                        </div>
-                    `;
-                    contenedor.appendChild(div);
+                currentWeekData.push({
+                    day: daysOfWeek[i],
+                    phase: profile.name,
+                    status: profile.status,
+                    color: profile.color,
+                    focus: profile.focus,
+                    items: profile.items,
+                    targetUA: profile.targetUA,
+                    actualUA: 0
                 });
             }
 
-            document.getElementById('stat-kcal').innerText = totalKcal;
-            document.getElementById('stat-prot').innerText = totalProt.toFixed(1);
-            document.getElementById('stat-carb').innerText = totalCarb.toFixed(1);
-            document.getElementById('stat-gras').innerText = totalGras.toFixed(1);
+            renderTable();
+            renderChart();
         }
 
-        // Inicializar app
-        actualizarSelectAlimentos();
-        actualizarRestriccionesUI();
-        actualizarPlanificador();
-        renderDiario();
+        function renderTable() {
+            const tbody = document.getElementById("weekTableBody");
+            tbody.innerHTML = "";
+
+            currentWeekData.forEach((row, idx) => {
+                const tr = document.createElement("tr");
+                tr.className = "hover:bg-slate-750 transition-colors";
+                tr.innerHTML = `
+                    <td class="p-3 font-semibold text-white">${row.day}</td>
+                    <td class="p-3"><span class="px-2 py-1 text-xs rounded border font-mono ${row.color}">${row.phase}</span></td>
+                    <td class="p-3 font-semibold text-xs">${row.status}</td>
+                    <td class="p-3 text-slate-300">${row.focus}</td>
+                    <td class="p-3 text-slate-400 text-xs">${row.items.join(" • ")}</td>
+                    <td class="p-3 font-mono font-bold text-slate-300">${row.targetUA}</td>
+                    <td class="p-3 font-mono font-bold text-emerald-400" id="actual-ua-${idx}">${row.actualUA}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function renderChart() {
+            const ctx = document.getElementById('uaChart').getContext('2d');
+            
+            const labels = currentWeekData.map(d => `${d.day} (${d.phase})`);
+            const targetData = currentWeekData.map(d => d.targetUA);
+            const actualData = currentWeekData.map(d => d.actualUA);
+
+            if (uaChartInstance) {
+                uaChartInstance.destroy();
+            }
+
+            uaChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'UA Objetivo',
+                            data: targetData,
+                            backgroundColor: 'rgba(51, 65, 85, 0.7)',
+                            borderColor: 'rgba(100, 116, 139, 1)',
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'UA Real',
+                            data: actualData,
+                            backgroundColor: 'rgba(16, 185, 129, 0.7)',
+                            borderColor: 'rgba(16, 185, 129, 1)',
+                            borderWidth: 1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: '#334155' },
+                            ticks: { color: '#94a3b8' }
+                        },
+                        x: {
+                            grid: { color: '#334155' },
+                            ticks: { color: '#94a3b8' }
+                        }
+                    },
+                    plugins: {
+                        legend: { labels: { color: '#f8fafc' } }
+                    }
+                }
+            });
+        }
+
+        function setupCalcListeners() {
+            const rpe = document.getElementById("rpeInput");
+            const time = document.getElementById("timeInput");
+            const output = document.getElementById("calculatedUA");
+
+            const updateCalc = () => {
+                const ua = (parseInt(rpe.value) || 0) * (parseInt(time.value) || 0);
+                output.textContent = `${ua} UA`;
+            };
+
+            rpe.addEventListener("input", updateCalc);
+            time.addEventListener("input", updateCalc);
+        }
+
+        function logSession() {
+            const dayIdx = parseInt(document.getElementById("calcDaySelect").value);
+            const rpe = parseInt(document.getElementById("rpeInput").value) || 0;
+            const time = parseInt(document.getElementById("timeInput").value) || 0;
+            
+            const ua = rpe * time;
+            currentWeekData[dayIdx].actualUA = ua;
+            
+            document.getElementById(`actual-ua-${dayIdx}`).textContent = ua;
+            renderChart();
+        }
+
+        window.onload = initApp;
     </script>
 </body>
 </html>
