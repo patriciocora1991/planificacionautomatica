@@ -3,31 +3,31 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Planificador Automatizado de Carga (MD & UA)</title>
+    <title>Planificador de Rendimiento - Carga, Fuerza & Metodología MD</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-<body class="bg-slate-900 text-slate-100 min-h-screen p-4 md:p-8 font-sans">
+<body class="bg-slate-900 text-slate-100 min-h-screen p-3 md:p-6 font-sans">
 
     <div class="max-w-7xl mx-auto space-y-6">
         
         <!-- Header -->
         <header class="border-b border-slate-700 pb-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
-                <h1 class="text-3xl font-bold text-emerald-400">Calendario Semanal de Carga Automatizado</h1>
-                <p class="text-slate-400 text-sm">Distribución dinámica según el día de partido (MD) y cuantificación por UA</p>
+                <h1 class="text-2xl md:text-3xl font-bold text-emerald-400">Sistema Automatizado de Carga & Biomecánica</h1>
+                <p class="text-slate-400 text-xs md:text-sm">Periodización táctica (MD), monitoreo sRPE (UA) y circuitos de Fuerza-Potencia-Pliometría</p>
             </div>
-            <div class="bg-slate-800 p-3 rounded-lg border border-slate-700">
-                <span class="text-xs text-slate-400 font-mono block">Cuantificación de Carga:</span>
-                <span class="text-emerald-400 font-bold font-mono">UA = sRPE (1-10) × Tiempo (min)</span>
+            <div class="bg-slate-800 p-3 rounded-lg border border-slate-700 font-mono text-xs">
+                <span class="text-slate-400 block">Fórmula Carga Interna:</span>
+                <span class="text-emerald-400 font-bold">UA = sRPE (1-10) × Tiempo (min)</span>
             </div>
         </header>
 
-        <!-- Panel de Control de Automatización -->
-        <section class="bg-slate-800 p-6 rounded-xl border border-slate-700 grid grid-cols-1 md:grid-cols-3 gap-6">
+        <!-- Panel de Control -->
+        <section class="bg-slate-800 p-4 md:p-6 rounded-xl border border-slate-700 grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-                <label class="block text-sm font-semibold text-slate-200 mb-2">Seleccionar Día de Partido (MD)</label>
-                <select id="matchDaySelect" onchange="autoPlanWeek()" class="w-full bg-slate-900 border border-slate-600 rounded-lg p-2.5 text-white focus:ring-2 focus:ring-emerald-500 font-medium">
+                <label class="block text-xs font-semibold text-slate-300 mb-2">Día de Partido (Match Day - MD)</label>
+                <select id="matchDaySelect" onchange="autoPlanWeek()" class="w-full bg-slate-900 border border-slate-600 rounded-lg p-2.5 text-white text-sm focus:ring-2 focus:ring-emerald-500">
                     <option value="0">Lunes</option>
                     <option value="1">Martes</option>
                     <option value="2">Miércoles</option>
@@ -38,68 +38,85 @@
                 </select>
             </div>
             <div>
-                <label class="block text-sm font-semibold text-slate-200 mb-2">Objetivo de la Semana</label>
-                <select id="weekGoalSelect" onchange="autoPlanWeek()" class="w-full bg-slate-900 border border-slate-600 rounded-lg p-2.5 text-white focus:ring-2 focus:ring-emerald-500 font-medium">
-                    <option value="standard" selected>Estándar (Microciclo Estructurado)</option>
-                    <option value="high">Alta Carga (Overreaching Controlado)</option>
-                    <option value="tapering">Descarga / Tapering (Pre-Competencia Crítica)</option>
+                <label class="block text-xs font-semibold text-slate-300 mb-2">Perfil del Microciclo</label>
+                <select id="weekGoalSelect" onchange="autoPlanWeek()" class="w-full bg-slate-900 border border-slate-600 rounded-lg p-2.5 text-white text-sm focus:ring-2 focus:ring-emerald-500">
+                    <option value="standard" selected>Estructurado Estándar (MD Competitivo)</option>
+                    <option value="high">Sobrecarga Controlada (+15% UA)</option>
+                    <option value="tapering">Descarga / Tapering (-20% UA)</option>
                 </select>
             </div>
             <div class="flex items-end">
-                <button onclick="simulateAllRealUA()" class="w-full bg-emerald-600 hover:bg-emerald-500 font-bold py-2.5 px-4 rounded-lg transition duration-200 shadow-lg shadow-emerald-900/40 text-sm">
-                    Simular Ejecución Real Completa
+                <button onclick="simulateAllRealUA()" class="w-full bg-emerald-600 hover:bg-emerald-500 font-bold py-2.5 px-4 rounded-lg transition duration-200 text-xs shadow-lg shadow-emerald-950">
+                    Simular Carga Real Completa
                 </button>
             </div>
         </section>
 
-        <!-- Visualización en Calendario (Tarjetas de Lunes a Domingo) -->
+        <!-- Vista de Calendario Semanal (Lunes a Domingo) -->
         <section>
-            <h2 class="text-xl font-bold mb-4 text-emerald-400">Vista de Calendario Semanal (Lunes a Domingo)</h2>
+            <h2 class="text-lg font-bold mb-3 text-emerald-400">Calendario Semanal de Carga (Semaforización & MD)</h2>
             <div id="calendarGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-7 gap-3">
-                <!-- Se genera dinámicamente -->
+                <!-- Generación Dinámica de Tarjetas -->
             </div>
         </section>
 
-        <!-- Dashboard: Gráfica de Ondulación y Calculadora -->
+        <!-- Detalle Específico de Contenidos: Circuitos de Fuerza, Velocidad y Resistencia -->
+        <section class="bg-slate-800 p-5 rounded-xl border border-slate-700 space-y-4">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-slate-700 pb-3 gap-2">
+                <div>
+                    <span class="text-xs font-mono text-emerald-400 uppercase tracking-widest">Prescripción Metodológica Detallada</span>
+                    <h2 id="selectedDayTitle" class="text-xl font-bold text-white">Día Seleccionado: Martes (MD-4 Tensión)</h2>
+                </div>
+                <div class="flex gap-2">
+                    <span id="selectedDayPhaseBadge" class="px-2.5 py-1 text-xs font-mono rounded border bg-yellow-900/50 text-yellow-300 border-yellow-500">MD-4</span>
+                    <span id="selectedDayUABadge" class="px-2.5 py-1 text-xs font-mono rounded border bg-slate-700 text-slate-200 border-slate-600">525 UA Obj.</span>
+                </div>
+            </div>
+
+            <!-- Grilla de los 3 Circuitos Específicos -->
+            <div id="circuitsContainer" class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                <!-- Se llena dinámicamente con los 3 circuitos según el día seleccionado -->
+            </div>
+        </section>
+
+        <!-- Dashboard: Gráfico de Ondulación & Calculadora sRPE -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             
-            <!-- Gráfico Ondulación Semanal -->
-            <div class="lg:col-span-2 bg-slate-800 p-6 rounded-xl border border-slate-700">
-                <h2 class="text-xl font-semibold mb-4 text-emerald-400">Ondulación de Carga (UA Programada vs Real)</h2>
-                <div class="h-64">
+            <div class="lg:col-span-2 bg-slate-800 p-5 rounded-xl border border-slate-700">
+                <h2 class="text-lg font-semibold mb-3 text-emerald-400">Ondulación de Carga (Objetivo vs Real)</h2>
+                <div class="h-60">
                     <canvas id="uaChart"></canvas>
                 </div>
             </div>
 
-            <!-- Panel de Ajuste Rápido del Día -->
-            <div class="bg-slate-800 p-6 rounded-xl border border-slate-700 flex flex-col justify-between">
+            <div class="bg-slate-800 p-5 rounded-xl border border-slate-700 flex flex-col justify-between space-y-4">
                 <div>
-                    <h2 class="text-xl font-semibold mb-3 text-emerald-400">Ajuste de Sesión Diaria</h2>
-                    <div class="space-y-4">
+                    <h2 class="text-lg font-semibold mb-3 text-emerald-400">Ajuste Manual sRPE</h2>
+                    <div class="space-y-3">
                         <div>
-                            <label class="block text-xs text-slate-400 mb-1">Día a Modificar</label>
-                            <select id="calcDaySelect" class="w-full bg-slate-900 border border-slate-600 rounded p-2 text-sm text-white" onchange="syncInputWithSelectedDay()"></select>
+                            <label class="block text-xs text-slate-400 mb-1">Día de la semana</label>
+                            <select id="calcDaySelect" class="w-full bg-slate-900 border border-slate-600 rounded p-2 text-xs text-white" onchange="selectDayForView(parseInt(this.value))"></select>
                         </div>
-                        <div class="grid grid-cols-2 gap-3">
+                        <div class="grid grid-cols-2 gap-2">
                             <div>
-                                <label class="block text-xs text-slate-400 mb-1">RPE Percibido (1-10)</label>
-                                <input type="number" id="rpeInput" min="1" max="10" value="7" class="w-full bg-slate-900 border border-slate-600 rounded p-2 text-sm text-white">
+                                <label class="block text-xs text-slate-400 mb-1">sRPE (1-10)</label>
+                                <input type="number" id="rpeInput" min="1" max="10" value="7" class="w-full bg-slate-900 border border-slate-600 rounded p-2 text-xs text-white">
                             </div>
                             <div>
-                                <label class="block text-xs text-slate-400 mb-1">Duración (min)</label>
-                                <input type="number" id="timeInput" min="0" max="180" value="60" class="w-full bg-slate-900 border border-slate-600 rounded p-2 text-sm text-white">
+                                <label class="block text-xs text-slate-400 mb-1">Tiempo (min)</label>
+                                <input type="number" id="timeInput" min="0" max="180" value="75" class="w-full bg-slate-900 border border-slate-600 rounded p-2 text-xs text-white">
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="mt-4 pt-4 border-t border-slate-700">
-                    <div class="flex justify-between items-center mb-3">
-                        <span class="text-sm font-medium">Carga Resultante:</span>
-                        <span id="calculatedUA" class="text-2xl font-bold font-mono text-emerald-400">420 UA</span>
+                <div class="pt-3 border-t border-slate-700">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-xs text-slate-300">Carga Obtenida:</span>
+                        <span id="calculatedUA" class="text-xl font-bold font-mono text-emerald-400">525 UA</span>
                     </div>
-                    <button onclick="logSession()" class="w-full bg-slate-700 hover:bg-slate-600 font-semibold py-2 px-4 rounded text-sm transition">
-                        Guardar Carga Real en Calendario
+                    <button onclick="logSession()" class="w-full bg-slate-700 hover:bg-slate-600 font-semibold py-2 px-3 rounded text-xs transition">
+                        Guardar Carga Real
                     </button>
                 </div>
             </div>
@@ -110,16 +127,66 @@
 
     <script>
         const daysOfWeek = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
-        
-        // Base de datos de contenidos por Fase MD (Factor biomecánico corregido: Extensiones de brazos)
+        let selectedDayIndex = 1; // Martes por defecto
+
+        // Base de Datos Metodológica Actualizada
         const mdProfiles = {
-            "MD": { name: "MD", phaseLabel: "PARTIDO", status: "🔴 Rojo", badgeColor: "bg-red-900/80 text-red-200 border-red-500", targetRPE: 9, targetTime: 90, focus: "Competencia", items: ["Activación Neuromuscular", "Competencia Oficial (90 min)", "Monitoreo de Impactos"] },
-            "MD+1": { name: "MD+1", phaseLabel: "Regenerativo", status: "🟩 Verde", badgeColor: "bg-emerald-900/50 text-emerald-300 border-emerald-500", targetRPE: 3, targetTime: 45, focus: "Recuperación Tisular", items: ["Movilidad Torácica/Cadera", "Liberación Miofascial", "Core Isométrico"] },
-            "MD-5": { name: "MD-5 / OFF", phaseLabel: "Descanso / Estructural", status: "🟩 Verde", badgeColor: "bg-slate-700 text-slate-300 border-slate-500", targetRPE: 0, targetTime: 0, focus: "Descanso Activo o Total", items: ["Descanso Total / Desconexión"] },
-            "MD-4": { name: "MD-4", phaseLabel: "Tensión", status: "🟨 Amarillo", badgeColor: "bg-yellow-900/50 text-yellow-300 border-yellow-500", targetRPE: 7, targetTime: 75, focus: "Fuerza e Hipertrofia", items: ["Extensiones de brazos (Empuje H.)", "Dominante de Cadera (Peso Muerto)", "Sentadilla Zercher"] },
-            "MD-3": { name: "MD-3", phaseLabel: "Extensión", status: "🔴 Rojo", badgeColor: "bg-red-900/50 text-red-300 border-red-500", targetRPE: 8, targetTime: 90, focus: "Capacidad Aeróbica / Área", items: ["Extensiones de brazos declinadas", "Dominadas Pronas (Tirón V.)", "Juegos Reducidos (Grandes)"] },
-            "MD-2": { name: "MD-2", phaseLabel: "Velocidad", status: "🟨 Amarillo", badgeColor: "bg-yellow-900/50 text-yellow-300 border-yellow-500", targetRPE: 6, targetTime: 60, focus: "Neuromuscular / Agilidad", items: ["Extensiones de brazos pliométricas", "Saltos Monopodales Vectoriales", "Sprint Corto (0-10m)"] },
-            "MD-1": { name: "MD-1", phaseLabel: "Activación", status: "🟩 Verde", badgeColor: "bg-emerald-900/50 text-emerald-300 border-emerald-500", targetRPE: 4, targetTime: 40, focus: "Tapering y Reacción", items: ["Activación Tríceps/Pectoral", "Lanzamientos Balón Medicinal", "Velocidad Reaccional"] }
+            "MD": { 
+                name: "MD", phaseLabel: "PARTIDO OFICIAL", status: "🔴 Rojo", badgeColor: "bg-red-900/80 text-red-200 border-red-500", targetRPE: 9, targetTime: 90, focus: "Máxima Exigencia Competitiva",
+                circuits: [
+                    { title: "Bloque A: Calentamiento Específico", type: "Activación Neuromuscular", items: ["Movilidad dinámica global & Potenciación Post-Activación (PAP)", "Extensiones de brazos explosivas sin carga (2x5)", "Aceleraciones progresivas vectoriales (3x15m)"] },
+                    { title: "Bloque B: Estímulo Competitivo", type: "Partido Oficial", items: ["90 Minutos de juego continuo / sustituciones", "Demandas de alta intensidad y desaceleraciones", "Registros con GPS y sRPE al finalizar"] },
+                    { title: "Bloque C: Recuperación Inmediata", type: "Regeneración Inicial", items: ["Hidratación y reposición de glucógeno", "Protocolo de crioterapia / inmersión", "Liberación miofascial suave en miembros inferiores"] }
+                ]
+            },
+            "MD+1": { 
+                name: "MD+1", phaseLabel: "Regenerativo", status: "🟩 Verde", badgeColor: "bg-emerald-900/50 text-emerald-300 border-emerald-500", targetRPE: 3, targetTime: 45, focus: "Compensación Tisular y Movilidad",
+                circuits: [
+                    { title: "Circuito 1: Movilidad & Flexibilidad", type: "Regenerativo", items: ["Movilidad articulada de cadera y tobillo (3x10)", "Extensiones de brazos isométricas ligeras (3x15s en apoyo)", "Liberación miofascial con FOAM roller (10 min)"] },
+                    { title: "Circuito 2: Core & Estabilidad", type: "Isometría & Salud Articular", items: ["Plancha frontal con anti-extensión (3x30s)", "Bird-Dog con pausa isométrica (3x8 por lado)", "Pallof Press dinámico con banda (3x10 por lado)"] },
+                    { title: "Circuito 3: Capacidad Aeróbica Bajas Pulsaciones", type: "Recuperación Cardíaca", items: ["Bicicleta / Carrera continua regenerativa (<60% VAM)", "Caminata descalzo y trabajo en césped", "Estiramientos asistidos de la cadena posterior"] }
+                ]
+            },
+            "MD-5": { 
+                name: "MD-5", phaseLabel: "Descanso / Estructural", status: "🟩 Verde", badgeColor: "bg-slate-700 text-slate-300 border-slate-500", targetRPE: 0, targetTime: 0, focus: "Descanso Total / Desconexión",
+                circuits: [
+                    { title: "Circuito 1: Descanso Pasivo", type: "Sin Carga", items: ["Descanso biológico total", "Sueño reparador e higiene del descanso"] },
+                    { title: "Circuito 2: Nutrición & Hidratación", type: "Recuperación Biológica", items: ["Carga de carbohidratos de bajo índice glucémico", "Balance hídrico diario adecuado"] },
+                    { title: "Circuito 3: Evaluación Subjetiva", type: "Monitoreo", items: ["Cuestionario de Bienestar / Wellness (Carga mental y muscular)"] }
+                ]
+            },
+            "MD-4": { 
+                name: "MD-4", phaseLabel: "Día de Tensión", status: "🟨 Amarillo", badgeColor: "bg-yellow-900/50 text-yellow-300 border-yellow-500", targetRPE: 7, targetTime: 75, focus: "Fuerza Estructural, Potencia y RFD",
+                circuits: [
+                    { title: "Circuito 1: Fuerza Base & Estructural", type: "Fuerza Máxima Relativa (3-4 Ejercicios)", items: ["Sentadilla Zercher con barra (4x6 @80% 1RM)", "Extensiones de brazos lastradas con agarre neutro (4x6)", "Peso Muerto Rumano / Dominante Cadera (4x8)", "Dominadas Pronas con lastre (4x6)"] },
+                    { title: "Circuito 2: Potencia Tensa & RFD", type: "Cargas Explosivas / Balístico (3-4 Ejercicios)", items: ["Landmine Push Press unipodal (3x5 por lado)", "Extensiones de brazos pliométricas sobre balón medicinal (3x6)", "Saltos al cajón con carga (Countermovement Jump) (3x5)", "Cargadas de potencia desde bloques (3x4)"] },
+                    { title: "Circuito 3: Pliometría & Rigidez Muscular", type: "Stiffness & Transferencia (3-4 Ejercicios)", items: ["Drop Jumps desde 30cm (3x5 - contacto rápido)", "Bounds laterales unipodales (3x6 por pierna)", "Extensiones de brazos explosivas con despegue de manos (3x6)", "Rotaciones explosivas con polea / Landmine (3x8 por lado)"] }
+                ]
+            },
+            "MD-3": { 
+                name: "MD-3", phaseLabel: "Día de Extensión", status: "🔴 Rojo", badgeColor: "bg-red-900/50 text-red-300 border-red-500", targetRPE: 8, targetTime: 90, focus: "Resistencia Metabólica Específica y VAM",
+                circuits: [
+                    { title: "Circuito 1: Resistencia metabólica - SSG", type: "Juegos Reducidos Grandes (Espacio Amplio)", items: ["SSG 8v8 a espacio real (4 bloques de 6 min)", "Enfoque en desplazamientos de alta distancia total", "Transiciones ofensivas y defensivas continuas"] },
+                    { title: "Circuito 2: HIIT Intermitente VAM", type: "Capacidad Aeróbica de Alta Intensidad", items: ["Microintervalos 15'' x 15'' al 110% VAM (2 series de 8 min)", "Cambios de dirección de 180° cada 15 segundos", "Extensiones de brazos intermitentes entre bloques (3x10 neutras)"] },
+                    { title: "Circuito 3: RSA & Capacidad de Buffer", type: "Resistencia al Sprint Repetido", items: ["6 sprints de 30m con 20s de pausa activa (2 bloques)", "Desaceleraciones controladas con frenada a 2 tiempos", "Core dinámico de alta velocidad (Plancha con toques de hombro 3x20)"] }
+                ]
+            },
+            "MD-2": { 
+                name: "MD-2", phaseLabel: "Día de Velocidad", status: "🟨 Amarillo", badgeColor: "bg-yellow-900/50 text-yellow-300 border-yellow-500", targetRPE: 6, targetTime: 60, focus: "Velocidad Máxima, Agilidad y Reacción",
+                circuits: [
+                    { title: "Circuito 1: Aceleración & Mecánica de Sprint", type: "Velocidad Lineal & Vectorial", items: ["Salidas desde diferentes posiciones (3x10m)", "Sprints con trineo de arrastre ligero (10% peso corp.) (4x15m)", "Extensiones de brazos plio-reactivas con palmada (3x5)"] },
+                    { title: "Circuito 2: Velocidad Máxima & VAM Pico", type: "VMax & Espacio Abierto", items: ["Flying Sprints: 10m de aceleración + 20m al 100% VMax (4 repeticiones)", "Curved running (Sprints en curva) (3x20m)", "Saltos monopodales continuos de baja respuesta (Hops) (3x8 por pierna)"] },
+                    { title: "Circuito 3: Agilidad Reactiva & COD", type: "Decisión Neuromuscular Corta", items: ["Cambios de dirección reactivos por estímulo visual/auditivo (4x5m)", "Pliometría horizontal de bajo tiempo de contacto (3x6 saltos)", "Extensiones de brazos declinadas a 1 mano asistida (3x5)"] }
+                ]
+            },
+            "MD-1": { 
+                name: "MD-1", phaseLabel: "Activación Pre-Competitiva", status: "🟩 Verde", badgeColor: "bg-emerald-900/50 text-emerald-300 border-emerald-500", targetRPE: 4, targetTime: 40, focus: "Tapering, Potenciación y Reactividad",
+                circuits: [
+                    { title: "Circuito 1: Activación Neuromuscular Corta", type: "PAP & Reactividad", items: ["Extensiones de brazos explosivas con banda elástica (3x4)", "Lanzamientos de balón medicinal sobre cabeza (3x5)", "Saltos verticales con pausas cortas (3x3)"] },
+                    { title: "Circuito 2: Velocidad de Reacción Específica", type: "Sprints Cortos & Táctica", items: ["Aceleraciones ultra-cortas (0 a 5 metros) (4 repeticiones)", "Acciones tácticas a balón parado / ABP", "Rondos de alta velocidad de circulación de balón"] },
+                    { title: "Circuito 3: Movilidad Tapering & Core", type: "Ajuste Final", items: ["Movilidad dinámica de aductores y flexores de cadera", "Core anti-rotacional liviano (Press Pallof 2x6)", "Visualización y ajuste neuro-cognitivo"] }
+                ]
+            }
         };
 
         let currentWeekData = [];
@@ -164,6 +231,7 @@
                 const calcTargetUA = Math.round((profile.targetRPE * profile.targetTime) * goalMultiplier);
 
                 currentWeekData.push({
+                    dayIndex: i,
                     day: daysOfWeek[i],
                     isMD: diff === 0,
                     phaseKey: phaseKey,
@@ -171,7 +239,7 @@
                     status: profile.status,
                     badgeColor: profile.badgeColor,
                     focus: profile.focus,
-                    items: profile.items,
+                    circuits: profile.circuits,
                     targetRPE: profile.targetRPE,
                     targetTime: profile.targetTime,
                     targetUA: calcTargetUA,
@@ -181,7 +249,7 @@
 
             renderCalendarGrid();
             renderChart();
-            syncInputWithSelectedDay();
+            selectDayForView(selectedDayIndex);
         }
 
         function renderCalendarGrid() {
@@ -190,53 +258,89 @@
 
             currentWeekData.forEach((d, idx) => {
                 const card = document.createElement("div");
+                const isSelected = idx === selectedDayIndex;
                 const isMatch = d.isMD;
                 
-                card.className = `rounded-xl border p-3 flex flex-col justify-between transition-all ${
-                    isMatch 
-                        ? 'bg-slate-800 border-red-500 ring-2 ring-red-500/50 shadow-lg shadow-red-950/50' 
-                        : 'bg-slate-800/80 border-slate-700 hover:border-slate-600'
+                card.onclick = () => selectDayForView(idx);
+
+                card.className = `rounded-xl border p-3 flex flex-col justify-between cursor-pointer transition-all ${
+                    isSelected ? 'ring-2 ring-emerald-400 border-emerald-400 bg-slate-800' : 
+                    isMatch ? 'bg-slate-800/90 border-red-500/80 hover:border-red-400' : 'bg-slate-800/60 border-slate-700 hover:border-slate-500'
                 }`;
 
                 card.innerHTML = `
                     <div>
-                        <!-- Header de la Tarjeta -->
-                        <div class="flex justify-between items-center mb-2">
-                            <span class="font-bold ${isMatch ? 'text-red-400 text-base' : 'text-slate-200 text-sm'}">${d.day}</span>
-                            <span class="text-[10px] px-2 py-0.5 rounded font-mono border ${d.badgeColor}">${d.phaseKey}</span>
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="font-bold text-xs ${isMatch ? 'text-red-400' : 'text-slate-200'}">${d.day}</span>
+                            <span class="text-[9px] px-1.5 py-0.5 rounded font-mono border ${d.badgeColor}">${d.phaseKey}</span>
                         </div>
-                        
-                        <!-- Etiqueta de Partido / Enfoque -->
-                        <div class="mb-2">
-                            <span class="text-xs font-semibold ${isMatch ? 'text-red-300 font-bold uppercase tracking-wider block' : 'text-emerald-400 block'}">
-                                ${d.phaseLabel}
-                            </span>
-                            <span class="text-[11px] text-slate-400 block leading-tight mt-1">${d.focus}</span>
-                        </div>
-
-                        <!-- Lista de Elementos Biomecánicos Planificados -->
-                        <div class="my-3 pt-2 border-t border-slate-700/60">
-                            <span class="text-[10px] font-mono text-slate-400 uppercase block mb-1">Contenidos:</span>
-                            <ul class="space-y-1">
-                                ${d.items.map(item => `<li class="text-[11px] text-slate-300 leading-tight flex items-start"><span class="text-emerald-500 mr-1">•</span>${item}</li>`).join('')}
-                            </ul>
-                        </div>
+                        <span class="text-[11px] font-semibold block leading-tight ${isMatch ? 'text-red-300 font-bold uppercase' : 'text-emerald-400'}">
+                            ${d.phaseLabel}
+                        </span>
+                        <span class="text-[10px] text-slate-400 block leading-tight mt-1 line-clamp-2">${d.focus}</span>
                     </div>
 
-                    <!-- Métricas UA de la Tarjeta -->
-                    <div class="mt-2 pt-2 border-t border-slate-700/60 font-mono flex justify-between items-end">
+                    <div class="mt-3 pt-2 border-t border-slate-700/60 font-mono flex justify-between items-end">
                         <div>
-                            <span class="text-[9px] text-slate-400 block">OBJ. UA</span>
+                            <span class="text-[8px] text-slate-400 block">OBJ.</span>
                             <span class="text-xs font-bold text-slate-300">${d.targetUA}</span>
                         </div>
                         <div class="text-right">
-                            <span class="text-[9px] text-slate-400 block">REAL UA</span>
+                            <span class="text-[8px] text-slate-400 block">REAL</span>
                             <span class="text-xs font-bold ${d.actualUA > 0 ? 'text-emerald-400' : 'text-slate-500'}">${d.actualUA}</span>
                         </div>
                     </div>
                 `;
                 container.appendChild(card);
             });
+        }
+
+        function selectDayForView(dayIdx) {
+            selectedDayIndex = dayIdx;
+            const data = currentWeekData[dayIdx];
+
+            document.getElementById("selectedDayTitle").textContent = `Planificación para el ${data.day}: ${data.focus}`;
+            document.getElementById("selectedDayPhaseBadge").textContent = data.phaseKey;
+            document.getElementById("selectedDayPhaseBadge").className = `px-2.5 py-1 text-xs font-mono rounded border ${data.badgeColor}`;
+            document.getElementById("selectedDayUABadge").textContent = `${data.targetUA} UA Obj.`;
+
+            // Renderizar los 3 circuitos en tarjetas independientes
+            const container = document.getElementById("circuitsContainer");
+            container.innerHTML = "";
+
+            data.circuits.forEach((c, cIdx) => {
+                const circCard = document.createElement("div");
+                circCard.className = "bg-slate-900/80 border border-slate-700 rounded-lg p-4 flex flex-col justify-between";
+                
+                circCard.innerHTML = `
+                    <div>
+                        <div class="flex justify-between items-start mb-2">
+                            <h3 class="font-bold text-sm text-emerald-400">${c.title}</h3>
+                            <span class="text-[10px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded border border-slate-600 font-mono">${c.type}</span>
+                        </div>
+                        <ul class="space-y-2 mt-3">
+                            ${c.items.map(item => `
+                                <li class="text-xs text-slate-300 flex items-start">
+                                    <span class="text-emerald-500 font-bold mr-1.5">•</span>
+                                    <span>${item}</span>
+                                </li>
+                            `).join('')}
+                        </ul>
+                    </div>
+                    <div class="mt-4 pt-2 border-t border-slate-800 text-[10px] text-slate-400 font-mono text-right">
+                        Estructura: 3 - 4 Ejercicios
+                    </div>
+                `;
+                container.appendChild(circCard);
+            });
+
+            // Sincronizar select e inputs de la calculadora
+            document.getElementById("calcDaySelect").value = dayIdx;
+            document.getElementById("rpeInput").value = data.targetRPE;
+            document.getElementById("timeInput").value = data.targetTime;
+            document.getElementById("calculatedUA").textContent = `${data.targetRPE * data.targetTime} UA`;
+
+            renderCalendarGrid();
         }
 
         function renderChart() {
@@ -296,15 +400,6 @@
             time.addEventListener("input", updateCalc);
         }
 
-        function syncInputWithSelectedDay() {
-            const dayIdx = parseInt(document.getElementById("calcDaySelect").value);
-            const data = currentWeekData[dayIdx];
-            
-            document.getElementById("rpeInput").value = data.targetRPE;
-            document.getElementById("timeInput").value = data.targetTime;
-            document.getElementById("calculatedUA").textContent = `${data.targetRPE * data.targetTime} UA`;
-        }
-
         function logSession() {
             const dayIdx = parseInt(document.getElementById("calcDaySelect").value);
             const rpe = parseInt(document.getElementById("rpeInput").value) || 0;
@@ -317,8 +412,7 @@
 
         function simulateAllRealUA() {
             currentWeekData.forEach(d => {
-                // Simulación con ligera variación fisiológica (+/- 10%)
-                const factor = d.targetUA === 0 ? 0 : (0.95 + Math.random() * 0.1);
+                const factor = d.targetUA === 0 ? 0 : (0.92 + Math.random() * 0.12);
                 d.actualUA = Math.round(d.targetUA * factor);
             });
             renderCalendarGrid();
