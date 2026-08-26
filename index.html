@@ -6,6 +6,8 @@
     <title>Planificador de Carga & Guía para el Cuerpo Técnico</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Librería para generación directa de PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </head>
 <body class="bg-slate-900 text-slate-100 min-h-screen p-3 md:p-6 font-sans">
 
@@ -19,7 +21,6 @@
             </div>
             
             <div class="flex items-center gap-3">
-                <!-- Botones de Pestaña -->
                 <div class="flex bg-slate-800 p-1 rounded-xl border border-slate-700 font-semibold text-xs">
                     <button id="btnTabDashboard" onclick="switchTab('dashboard')" class="px-4 py-2 rounded-lg transition bg-emerald-600 text-white font-bold shadow">
                         📊 Planificador & Dashboard
@@ -34,7 +35,7 @@
         <!-- ================= PESTAÑA 1: DASHBOARD Y PLANIFICADOR ================= -->
         <div id="tabDashboard" class="space-y-6">
             
-            <!-- BARRA DE GESTIÓN DE SEMANAS (PERSISTENCIA & HISTORIAL) -->
+            <!-- BARRA DE GESTIÓN DE SEMANAS (PERSISTENCIA, EXPORTACIÓN & HISTORIAL) -->
             <section class="bg-slate-800 p-4 rounded-xl border border-slate-700 flex flex-col md:flex-row justify-between items-center gap-4">
                 <div class="flex items-center space-x-3 w-full md:w-auto">
                     <span class="text-xs font-mono font-bold text-emerald-400 uppercase tracking-wide">Semana Activa:</span>
@@ -43,12 +44,15 @@
                     </select>
                 </div>
 
-                <div class="flex items-center space-x-2 w-full md:w-auto justify-end">
+                <div class="flex flex-wrap items-center space-x-2 w-full md:w-auto justify-end gap-y-2">
                     <button onclick="createNewWeek()" class="bg-slate-700 hover:bg-slate-600 text-white font-semibold px-3 py-1.5 rounded-lg text-xs transition border border-slate-600">
                         ➕ Nueva Semana
                     </button>
-                    <button onclick="saveCurrentWeek()" class="bg-emerald-600 hover:bg-emerald-500 font-bold px-4 py-1.5 rounded-lg text-xs transition shadow text-white">
+                    <button onclick="saveCurrentWeek()" class="bg-emerald-600 hover:bg-emerald-500 font-bold px-3 py-1.5 rounded-lg text-xs transition shadow text-white">
                         💾 Guardar Historial
+                    </button>
+                    <button onclick="exportToPDF()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-3 py-1.5 rounded-lg text-xs transition shadow flex items-center space-x-1">
+                        <span>📄</span> <span>Exportar PDF Staff</span>
                     </button>
                     <button onclick="resetAllHistory()" class="bg-red-900/60 hover:bg-red-800 text-red-200 font-semibold px-2 py-1.5 rounded-lg text-xs transition border border-red-700/50" title="Borrar Historial">
                         🗑️
@@ -199,7 +203,6 @@
                         <p class="text-xs text-slate-400">Selecciona el circuito exacto donde deseas inyectar cada ejercicio.</p>
                     </div>
 
-                    <!-- Selector del Circuito de Destino -->
                     <div class="flex items-center space-x-2 bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-700">
                         <label class="text-xs text-slate-300 font-semibold font-mono">Inyectar en:</label>
                         <select id="targetCircuitSelect" class="bg-slate-800 text-xs text-emerald-400 font-bold border border-slate-600 rounded px-2 py-1 focus:ring-1 focus:ring-emerald-500">
@@ -298,51 +301,24 @@
                 </div>
             </div>
 
-            <div class="bg-slate-800 p-5 rounded-xl border border-slate-700 space-y-5">
-                <div class="border-b border-slate-700 pb-3">
-                    <span class="text-xs font-mono text-emerald-400 uppercase tracking-widest font-bold">Fundamentos Metodológicos</span>
-                    <h3 class="text-xl font-bold text-white">3. Teoría del Entrenamiento Físico & Periodización Táctica</h3>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div class="bg-slate-900 p-4 rounded-lg border border-slate-700 space-y-2">
-                        <span class="text-lg">🔄</span>
-                        <h4 class="text-sm font-bold text-emerald-400">Principio de Supercompensación</h4>
-                        <p class="text-xs text-slate-300 leading-relaxed">
-                            Tras aplicar un estímulo de entreno, la capacidad física cae temporalmente por fatiga. Con el descanso e hidratación adecuada, el organismo se regenera **por encima del nivel inicial**.
-                        </p>
-                    </div>
-
-                    <div class="bg-slate-900 p-4 rounded-lg border border-slate-700 space-y-2">
-                        <span class="text-lg">🎯</span>
-                        <h4 class="text-sm font-bold text-emerald-400">Especificidad & Alternancia Horizontal</h4>
-                        <p class="text-xs text-slate-300 leading-relaxed">
-                            No se entrena "fuerza" o "resistencia" de forma aislada. Cada día del microciclo estimula una **dimensión fisiológica dominante** (Tensión, Extensión o Velocidad).
-                        </p>
-                    </div>
-
-                    <div class="bg-slate-900 p-4 rounded-lg border border-slate-700 space-y-2">
-                        <span class="text-lg">📉</span>
-                        <h4 class="text-sm font-bold text-emerald-400">Afinamiento Táctico / Tapering (MD-1)</h4>
-                        <p class="text-xs text-slate-300 leading-relaxed">
-                            En las 24-48h previas al partido se reduce drásticamente el volumen de trabajo (-40%) manteniendo un **pico corto de alta intensidad/reactividad**.
-                        </p>
-                    </div>
-                </div>
-            </div>
-
         </div>
 
+    </div>
+
+    <!-- CONTENEDOR OCULTO PARA IMPRESIÓN/DESCARGA EN PDF -->
+    <div id="pdfExportContainer" class="hidden">
+        <!-- Generado dinámicamente -->
     </div>
 
     <script>
         const daysOfWeek = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
         let selectedDayIndex = 1;
 
+        // Base de datos actualizada con nomenclaturas biomecánicas precisas (sin "flexiones de brazo")
         const exerciseDatabase = {
             "Sin Material / Peso Corporal": [
-                "Flexiones / Push-ups dinámicas (4x10)",
-                "Flexiones declinadas con pies elevados (3x8)",
+                "Empujes de brazo / Push-ups dinámicos (4x10)",
+                "Empujes declinados con pies elevados (3x8)",
                 "Sentadilla Búlgara sin carga (3x10/pierna)",
                 "Zancadas dinámicas multipatrón (3x12)",
                 "Nordic Hamstring asistido en suelo (3x5)",
@@ -360,7 +336,7 @@
             "Potencia & Pliometría": [
                 "Countermovement Jump (CMJ) con carga (3x5)",
                 "Drop Jumps desde cajón 30cm (3x5)",
-                "Extensiones de brazos pliométricas con palmada (3x5)",
+                "Empujes pliométricos con palmada (3x5)",
                 "Broad Jump / Salto horizontal continuo (3x4)",
                 "Lanzamiento de balón medicinal trasnuca (3x6)",
                 "Bounds laterales monopodales (3x6/lado)"
@@ -394,8 +370,8 @@
         function getDefaultCircuitsForPhase(phaseKey) {
             if (phaseKey === "MD-4") {
                 return [
-                    { title: "Circuito 1: Fuerza Base", type: "Fuerza Máxima", items: ["Sentadilla Zercher con barra (4x6)", "Flexiones de brazos lastradas (4x6)", "Peso Muerto Rumano (4x8)"] },
-                    { title: "Circuito 2: Potencia Tensa", type: "Potencia / Balístico", items: ["Landmine Push Press (3x5)", "Flexiones pliométricas sobre balón (3x6)", "CMJ con carga (3x5)"] },
+                    { title: "Circuito 1: Fuerza Base", type: "Fuerza Máxima", items: ["Sentadilla Zercher con barra (4x6)", "Empujes horizontales lastrados (4x6)", "Peso Muerto Rumano (4x8)"] },
+                    { title: "Circuito 2: Potencia Tensa", type: "Potencia / Balístico", items: ["Landmine Push Press (3x5)", "Empujes pliométricos sobre balón (3x6)", "CMJ con carga (3x5)"] },
                     { title: "Circuito 3: Rigidez & Pliometría", type: "Stiffness", items: ["Drop Jumps 30cm (3x5)", "Bounds laterales (3x6)", "Rotaciones en polea / banda (3x8)"] }
                 ];
             } else if (phaseKey === "MD-3") {
@@ -408,11 +384,11 @@
                 return [
                     { title: "Circuito 1: Aceleración", type: "Velocidad Lineal", items: ["Salidas desde diferentes posiciones (3x10m)", "Sprints con trineo ligero (4x15m)"] },
                     { title: "Circuito 2: Velocidad Máxima", type: "VMax & Espacio", items: ["Flying Sprints 10m + 20m VMax (4 rep.)", "Hops monopodales continuos (3x8)"] },
-                    { title: "Circuito 3: Agilidad Reactiva", type: "Decisión Neuromuscular", items: ["COD reactivo por estímulo visual (4x5m)", "Flexiones declinadas explosivas (3x5)"] }
+                    { title: "Circuito 3: Agilidad Reactiva", type: "Decisión Neuromuscular", items: ["COD reactivo por estímulo visual (4x5m)", "Empujes declinados explosivos (3x5)"] }
                 ];
             } else if (phaseKey === "MD-1") {
                 return [
-                    { title: "Circuito 1: Activación Neuromuscular", type: "PAP", items: ["Flexiones explosivas con banda (3x4)", "Lanzamiento balón medicinal trasnuca (3x5)"] },
+                    { title: "Circuito 1: Activación Neuromuscular", type: "PAP", items: ["Empujes explosivos con banda (3x4)", "Lanzamiento balón medicinal trasnuca (3x5)"] },
                     { title: "Circuito 2: Reacción Específica", type: "Aceleración Corta", items: ["Sprints ultra-cortos (0-5m) (4 rep.)", "Rondos de alta velocidad"] },
                     { title: "Circuito 3: Tapering & Ajuste", type: "Core & Movilidad", items: ["Movilidad dinámica de cadera", "Press Pallof anti-rotacional (2x6)"] }
                 ];
@@ -442,7 +418,6 @@
             loadHistoryFromStorage();
 
             if (allWeeksHistory.length === 0) {
-                // Crear primera semana inicial
                 const initialWeek = createWeekObject("Semana 1");
                 allWeeksHistory.push(initialWeek);
                 activeWeekId = initialWeek.id;
@@ -505,11 +480,11 @@
             saveCurrentWeekStateInMemory();
             const weekNumber = allWeeksHistory.length + 1;
             const newWeek = createWeekObject(`Semana ${weekNumber}`);
-            allWeeksHistory.unshift(newWeek); // Insertar al inicio como más reciente
+            allWeeksHistory.unshift(newWeek);
             activeWeekId = newWeek.id;
             saveHistoryToStorage();
             renderWeekSelector();
-            autoPlanWeek(); // Planificar estructura base
+            autoPlanWeek();
         }
 
         function saveCurrentWeek() {
@@ -554,6 +529,107 @@
                 allWeeksHistory = [];
                 initApp();
             }
+        }
+
+        // ================= EXPORTAR RESUMEN A PDF =================
+        function exportToPDF() {
+            saveCurrentWeekStateInMemory();
+            const activeWeekObj = allWeeksHistory.find(w => w.id === activeWeekId);
+            const weekName = activeWeekObj ? activeWeekObj.name : "Microciclo_Semanal";
+
+            const acuteLoad = document.getElementById("acuteLoadVal").textContent;
+            const chronicLoad = document.getElementById("chronicLoadInput").value;
+            const acwrRatio = document.getElementById("acwrRatioVal").textContent;
+            const acwrStatus = document.getElementById("acwrStatusTitle").textContent;
+
+            // Construcción del template de resumen estilizado
+            let daysHTML = currentWeekData.map(d => {
+                let circuitsHTML = d.circuits.map(c => `
+                    <div style="margin-bottom: 4px;">
+                        <strong style="color: #0f766e; font-size: 11px;">${c.title} (${c.type}):</strong>
+                        <span style="color: #334155; font-size: 10px;">${c.items.join(', ')}</span>
+                    </div>
+                `).join('');
+
+                return `
+                    <tr style="border-bottom: 1px solid #cbd5e1;">
+                        <td style="padding: 8px; font-weight: bold; width: 12%; color: #0f172a;">${d.day}</td>
+                        <td style="padding: 8px; width: 10%;"><span style="background: #e2e8f0; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold;">${d.phaseKey}</span></td>
+                        <td style="padding: 8px; width: 20%; color: #334155;"><strong>${d.phaseLabel}</strong><br><small style="color: #64748b;">${d.focus}</small></td>
+                        <td style="padding: 8px; width: 12%; text-align: center; font-family: monospace;">${d.availableTime} min<br><strong>${d.targetUA} UA</strong></td>
+                        <td style="padding: 8px; width: 10%; text-align: center; font-family: monospace; font-weight: bold; color: #047857;">${d.actualUA > 0 ? d.actualUA + ' UA' : '-'}</td>
+                        <td style="padding: 8px; width: 36%;">${d.isTrainable ? circuitsHTML : '<em style="color:#94a3b8; font-size:10px;">Sin entrenamiento / Descanso</em>'}</td>
+                    </tr>
+                `;
+            }).join('');
+
+            const exportHTML = `
+                <div style="padding: 25px; font-family: sans-serif; background: #ffffff; color: #0f172a; max-width: 800px; margin: auto;">
+                    <div style="display: flex; justify-between: space-between; align-items: center; border-bottom: 2px solid #10b981; padding-bottom: 12px; margin-bottom: 15px;">
+                        <div>
+                            <h1 style="font-size: 20px; color: #047857; margin: 0; font-weight: bold;">PLANIFICACIÓN DEL MICROCICLO - CUERPO TÉCNICO</h1>
+                            <p style="margin: 3px 0 0 0; color: #64748b; font-size: 11px;">${weekName} | Reporte Oficial de Cargas & Contenidos Tácticos</p>
+                        </div>
+                        <div style="text-align: right; font-size: 10px; color: #64748b;">
+                            Fecha: ${new Date().toLocaleDateString('es-ES')}
+                        </div>
+                    </div>
+
+                    <!-- RESUMEN DE CARGA Y RATIO -->
+                    <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                        <div style="flex: 1; background: #f8fafc; border: 1px solid #e2e8f0; padding: 8px; border-radius: 6px; text-align: center;">
+                            <span style="font-size: 9px; color: #64748b; display: block; font-weight: bold;">CARGA AGUDA</span>
+                            <strong style="font-size: 16px; color: #047857;">${acuteLoad}</strong>
+                        </div>
+                        <div style="flex: 1; background: #f8fafc; border: 1px solid #e2e8f0; padding: 8px; border-radius: 6px; text-align: center;">
+                            <span style="font-size: 9px; color: #64748b; display: block; font-weight: bold;">CARGA CRÓNICA</span>
+                            <strong style="font-size: 16px; color: #334155;">${chronicLoad} UA</strong>
+                        </div>
+                        <div style="flex: 1; background: #f8fafc; border: 1px solid #e2e8f0; padding: 8px; border-radius: 6px; text-align: center;">
+                            <span style="font-size: 9px; color: #64748b; display: block; font-weight: bold;">RATIO ACWR</span>
+                            <strong style="font-size: 16px; color: #0284c7;">${acwrRatio}</strong>
+                        </div>
+                        <div style="flex: 1.5; background: #f0fdf4; border: 1px solid #bbf7d0; padding: 8px; border-radius: 6px; text-align: center;">
+                            <span style="font-size: 9px; color: #166534; display: block; font-weight: bold;">ESTADO DEL RATIO</span>
+                            <strong style="font-size: 11px; color: #15803d;">${acwrStatus}</strong>
+                        </div>
+                    </div>
+
+                    <!-- TABLA SEMANAL -->
+                    <table style="width: 100%; border-collapse: collapse; font-size: 11px;">
+                        <thead>
+                            <tr style="background: #0f172a; color: #ffffff; text-align: left;">
+                                <th style="padding: 8px;">Día</th>
+                                <th style="padding: 8px;">Fase</th>
+                                <th style="padding: 8px;">Orientación</th>
+                                <th style="padding: 8px; text-align: center;">Tiempo/Obj</th>
+                                <th style="padding: 8px; text-align: center;">Real</th>
+                                <th style="padding: 8px;">Contenidos / Circuitos</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${daysHTML}
+                        </tbody>
+                    </table>
+
+                    <div style="margin-top: 20px; border-top: 1px solid #e2e8f0; pt-10px; font-size: 9px; color: #94a3b8; text-align: center;">
+                        Documento generado automáticamente por el Sistema de Control de Cargas & ACWR para el Cuerpo Técnico.
+                    </div>
+                </div>
+            `;
+
+            const pdfContainer = document.getElementById("pdfExportContainer");
+            pdfContainer.innerHTML = exportHTML;
+
+            const opt = {
+                margin:       0.3,
+                filename:     `Resumen_Staff_${weekName.replace(/\s+/g, '_')}.pdf`,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2 },
+                jsPDF:        { unit: 'in', format: 'letter', orientation: 'landscape' }
+            };
+
+            html2pdf().set(opt).from(pdfContainer.children[0]).save();
         }
 
         // ================= LÓGICA DE AUTOPLANIFICACIÓN & MODIFICACIÓN MANUAL =================
@@ -615,13 +691,12 @@
             calculateACWR(true);
         }
 
-        // Modificación manual de Fase/Orientación por día
         function applyManualPhaseOverride(overridePhaseKey) {
             const data = currentWeekData[selectedDayIndex];
 
             if (overridePhaseKey === "AUTO") {
                 data.isManualOverride = false;
-                autoPlanWeek(); // Regenerar automático
+                autoPlanWeek();
                 return;
             }
 
@@ -890,11 +965,10 @@
             
             let chronicLoad = parseFloat(document.getElementById("chronicLoadInput").value) || 2800;
 
-            // Calcular Carga Crónica automáticamente basándose en las semanas guardadas anteriores
             if (autoComputeChronic && allWeeksHistory.length > 1) {
                 const pastWeeks = allWeeksHistory.filter(w => w.id !== activeWeekId && w.daysData && w.daysData.length === 7);
                 if (pastWeeks.length > 0) {
-                    const last4Weeks = pastWeeks.slice(0, 4); // Tomar hasta 4 semanas previas
+                    const last4Weeks = pastWeeks.slice(0, 4);
                     const sumAcutePast = last4Weeks.reduce((sum, w) => {
                         const weekSum = w.daysData.reduce((dSum, d) => dSum + (d.actualUA > 0 ? d.actualUA : d.targetUA), 0);
                         return sum + weekSum;
