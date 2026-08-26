@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Planificador de Rendimiento - Múltiples MD, ACWR & Edición Contenidos</title>
+    <title>Planificador de Carga & Guía para el Cuerpo Técnico</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
@@ -11,169 +11,321 @@
 
     <div class="max-w-7xl mx-auto space-y-6">
         
-        <!-- Header -->
+        <!-- Header & Navegación por Pestañas -->
         <header class="border-b border-slate-700 pb-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
-                <h1 class="text-2xl md:text-3xl font-bold text-emerald-400">Sistema Automatizado de Carga, Multi-MD & ACWR</h1>
-                <p class="text-slate-400 text-xs md:text-sm">Control de múltiples partidos, edición adaptativa por material y ratio Carga Aguda:Crónica</p>
+                <h1 class="text-2xl md:text-3xl font-bold text-emerald-400">Sistema de Control de Carga & ACWR</h1>
+                <p class="text-slate-400 text-xs md:text-sm">Gestión del microciclo, banco de ejercicios y manual sintético para el Cuerpo Técnico</p>
             </div>
-            <div class="bg-slate-800 p-3 rounded-lg border border-slate-700 font-mono text-xs">
-                <span class="text-slate-400 block">Fórmula Carga Interna & Ratio ACWR:</span>
-                <span class="text-emerald-400 font-bold">UA = sRPE × Tiempo | ACWR = Carga Aguda / Carga Crónica</span>
+            
+            <!-- Botones de Pestaña -->
+            <div class="flex bg-slate-800 p-1 rounded-xl border border-slate-700 font-semibold text-xs">
+                <button id="btnTabDashboard" onclick="switchTab('dashboard')" class="px-4 py-2 rounded-lg transition bg-emerald-600 text-white font-bold shadow">
+                    📊 Planificador & Dashboard
+                </button>
+                <button id="btnTabTheory" onclick="switchTab('theory')" class="px-4 py-2 rounded-lg transition text-slate-400 hover:text-white">
+                    📚 Guía Teórica (para CT)
+                </button>
             </div>
         </header>
 
-        <!-- Monitor de Ratio Carga Aguda / Crónica (ACWR) -->
-        <section class="bg-slate-800 p-4 rounded-xl border border-slate-700 grid grid-cols-1 md:grid-cols-4 gap-4 items-center">
-            <div class="space-y-1">
-                <span class="text-xs text-slate-400 font-mono uppercase block">Carga Aguda (Semana Actual)</span>
-                <span id="acuteLoadVal" class="text-2xl font-bold font-mono text-emerald-400">0 UA</span>
-                <span class="text-[10px] text-slate-500 block">Suma real/programada de 7 días</span>
-            </div>
+        <!-- ================= PESTAÑA 1: DASHBOARD Y PLANIFICADOR ================= -->
+        <div id="tabDashboard" class="space-y-6">
             
-            <div class="space-y-1">
-                <label class="text-xs text-slate-400 font-mono uppercase block">Carga Crónica Base (28 días)</label>
-                <div class="flex items-center space-x-2">
-                    <input type="number" id="chronicLoadInput" value="2800" step="50" onchange="calculateACWR()" class="w-28 bg-slate-900 border border-slate-600 rounded px-2 py-1 text-sm text-white font-mono font-bold">
-                    <span class="text-xs text-slate-400 font-mono">UA/sem</span>
-                </div>
-                <span class="text-[10px] text-slate-500 block">Promedio histórico de últimas 4 semanas</span>
-            </div>
-
-            <div class="space-y-1">
-                <span class="text-xs text-slate-400 font-mono uppercase block">Ratio ACWR Resultante</span>
-                <span id="acwrRatioVal" class="text-2xl font-bold font-mono text-white">0.00</span>
-                <span class="text-[10px] text-slate-500 block">Zona Dulce: 0.80 - 1.30</span>
-            </div>
-
-            <div id="acwrBadgeContainer" class="p-3 rounded-lg border text-center space-y-1 bg-slate-900 border-slate-700">
-                <span class="text-xs font-bold block uppercase tracking-wider text-slate-400" id="acwrStatusTitle">Sin Carga</span>
-                <span class="text-[11px] text-slate-400 block" id="acwrStatusDesc">Calculando ratio...</span>
-            </div>
-        </section>
-
-        <!-- Panel de Control Principal (Soporte Múltiples Partidos) -->
-        <section class="bg-slate-800 p-4 md:p-6 rounded-xl border border-slate-700 grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div>
-                <label class="block text-xs font-semibold text-slate-300 mb-2">Partido Principal (MD1)</label>
-                <select id="md1Select" onchange="autoPlanWeek()" class="w-full bg-slate-900 border border-slate-600 rounded-lg p-2 text-white text-xs focus:ring-2 focus:ring-emerald-500">
-                    <option value="0">Lunes</option>
-                    <option value="1">Martes</option>
-                    <option value="2">Miércoles</option>
-                    <option value="3">Jueves</option>
-                    <option value="4">Viernes</option>
-                    <option value="5" selected>Sábado</option>
-                    <option value="6">Domingo</option>
-                </select>
-            </div>
-
-            <div>
-                <label class="block text-xs font-semibold text-slate-300 mb-2">Segundo Partido (MD2 - Opcional)</label>
-                <select id="md2Select" onchange="autoPlanWeek()" class="w-full bg-slate-900 border border-slate-600 rounded-lg p-2 text-white text-xs focus:ring-2 focus:ring-emerald-500">
-                    <option value="-1" selected>Sin 2° Partido en la Semana</option>
-                    <option value="0">Lunes</option>
-                    <option value="1">Martes</option>
-                    <option value="2">Miércoles</option>
-                    <option value="3">Jueves</option>
-                    <option value="4">Viernes</option>
-                    <option value="5">Sábado</option>
-                    <option value="6">Domingo</option>
-                </select>
-            </div>
-
-            <div>
-                <label class="block text-xs font-semibold text-slate-300 mb-2">Ajuste de Carga Microciclo</label>
-                <select id="weekGoalSelect" onchange="autoPlanWeek()" class="w-full bg-slate-900 border border-slate-600 rounded-lg p-2 text-white text-xs focus:ring-2 focus:ring-emerald-500">
-                    <option value="standard" selected>Estándar Competitivo</option>
-                    <option value="high">Sobrecarga (+15% UA)</option>
-                    <option value="tapering">Descarga (-20% UA)</option>
-                </select>
-            </div>
-
-            <div class="flex items-end">
-                <button onclick="simulateAllRealUA()" class="w-full bg-emerald-600 hover:bg-emerald-500 font-bold py-2 px-3 rounded-lg transition duration-200 text-xs shadow-lg shadow-emerald-950">
-                    Simular Cargas Reales
-                </button>
-            </div>
-        </section>
-
-        <!-- Vista de Calendario Semanal (Lunes a Domingo) -->
-        <section>
-            <h2 class="text-lg font-bold mb-3 text-emerald-400">Calendario Semanal de Carga & Partidos</h2>
-            <div id="calendarGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-7 gap-3">
-                <!-- Tarjetas Dinámicas -->
-            </div>
-        </section>
-
-        <!-- Modificador Específico del Día & Personalización de Materiales/Ejercicios -->
-        <section class="bg-slate-800 p-5 rounded-xl border border-slate-700 space-y-5">
-            
-            <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center border-b border-slate-700 pb-4 gap-4">
-                <div>
-                    <span class="text-xs font-mono text-emerald-400 uppercase tracking-widest">Adaptación Metodológica por Faltante de Material o Tiempo</span>
-                    <h2 id="selectedDayTitle" class="text-xl font-bold text-white">Día Seleccionado: Martes</h2>
+            <!-- Monitor de Ratio Carga Aguda / Crónica (ACWR) -->
+            <section class="bg-slate-800 p-4 rounded-xl border border-slate-700 grid grid-cols-1 md:grid-cols-4 gap-4 items-center">
+                <div class="space-y-1">
+                    <span class="text-xs text-slate-400 font-mono uppercase block">Carga Aguda (Semana Actual)</span>
+                    <span id="acuteLoadVal" class="text-2xl font-bold font-mono text-emerald-400">0 UA</span>
+                    <span class="text-[10px] text-slate-500 block">Suma real/programada de 7 días</span>
                 </div>
                 
-                <div class="flex flex-wrap items-center gap-3 bg-slate-900 p-2.5 rounded-lg border border-slate-700">
-                    <label class="flex items-center cursor-pointer space-x-2 text-xs font-semibold">
-                        <input type="checkbox" id="dayActiveToggle" onchange="toggleSelectedDayActive()" class="w-4 h-4 text-emerald-600 rounded bg-slate-800 border-slate-600">
-                        <span id="toggleLabelText" class="text-slate-200">¿Se entrena este día?</span>
-                    </label>
-                    <div class="h-4 w-px bg-slate-700 hidden sm:block"></div>
+                <div class="space-y-1">
+                    <label class="text-xs text-slate-400 font-mono uppercase block">Carga Crónica Base (28 días)</label>
                     <div class="flex items-center space-x-2">
-                        <label class="text-xs text-slate-400">Tiempo disponible:</label>
-                        <input type="number" id="dayTimeInput" min="0" max="180" oninput="updateSelectedDayTime()" class="w-16 bg-slate-800 border border-slate-600 rounded px-2 py-1 text-xs text-white font-mono font-bold">
-                        <span class="text-xs text-slate-400">min</span>
+                        <input type="number" id="chronicLoadInput" value="2800" step="50" onchange="calculateACWR()" class="w-28 bg-slate-900 border border-slate-600 rounded px-2 py-1 text-sm text-white font-mono font-bold">
+                        <span class="text-xs text-slate-400 font-mono">UA/sem</span>
                     </div>
-                    <span id="selectedDayUABadge" class="px-2.5 py-1 text-xs font-mono rounded border bg-slate-700 text-slate-200 border-slate-600">0 UA Obj.</span>
+                    <span class="text-[10px] text-slate-500 block">Promedio histórico de últimas 4 semanas</span>
                 </div>
-            </div>
 
-            <!-- Grilla de los 3 Circuitos Específicos Modificables -->
-            <div id="circuitsContainer" class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                <!-- Contenidos interactivos y editables -->
-            </div>
-        </section>
-
-        <!-- Dashboard: Gráfico de Ondulación & Calculadora sRPE -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            
-            <div class="lg:col-span-2 bg-slate-800 p-5 rounded-xl border border-slate-700">
-                <h2 class="text-lg font-semibold mb-3 text-emerald-400">Ondulación de Carga (Objetivo vs Real)</h2>
-                <div class="h-60">
-                    <canvas id="uaChart"></canvas>
+                <div class="space-y-1">
+                    <span class="text-xs text-slate-400 font-mono uppercase block">Ratio ACWR Resultante</span>
+                    <span id="acwrRatioVal" class="text-2xl font-bold font-mono text-white">0.00</span>
+                    <span class="text-[10px] text-slate-500 block">Zona Dulce: 0.80 - 1.30</span>
                 </div>
-            </div>
 
-            <div class="bg-slate-800 p-5 rounded-xl border border-slate-700 flex flex-col justify-between space-y-4">
+                <div id="acwrBadgeContainer" class="p-3 rounded-lg border text-center space-y-1 bg-slate-900 border-slate-700">
+                    <span class="text-xs font-bold block uppercase tracking-wider text-slate-400" id="acwrStatusTitle">Sin Carga</span>
+                    <span class="text-[11px] text-slate-400 block" id="acwrStatusDesc">Calculando ratio...</span>
+                </div>
+            </section>
+
+            <!-- Panel de Control Principal (Soporte Múltiples Partidos) -->
+            <section class="bg-slate-800 p-4 md:p-6 rounded-xl border border-slate-700 grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div>
-                    <h2 class="text-lg font-semibold mb-3 text-emerald-400">Registro sRPE Post-Entreno</h2>
-                    <div class="space-y-3">
-                        <div>
-                            <label class="block text-xs text-slate-400 mb-1">Día a registrar</label>
-                            <select id="calcDaySelect" class="w-full bg-slate-900 border border-slate-600 rounded p-2 text-xs text-white" onchange="selectDayForView(parseInt(this.value))"></select>
+                    <label class="block text-xs font-semibold text-slate-300 mb-2">Partido Principal (MD1)</label>
+                    <select id="md1Select" onchange="autoPlanWeek()" class="w-full bg-slate-900 border border-slate-600 rounded-lg p-2 text-white text-xs focus:ring-2 focus:ring-emerald-500">
+                        <option value="0">Lunes</option>
+                        <option value="1">Martes</option>
+                        <option value="2">Miércoles</option>
+                        <option value="3">Jueves</option>
+                        <option value="4">Viernes</option>
+                        <option value="5" selected>Sábado</option>
+                        <option value="6">Domingo</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-2">Segundo Partido (MD2 - Opcional)</label>
+                    <select id="md2Select" onchange="autoPlanWeek()" class="w-full bg-slate-900 border border-slate-600 rounded-lg p-2 text-white text-xs focus:ring-2 focus:ring-emerald-500">
+                        <option value="-1" selected>Sin 2° Partido en la Semana</option>
+                        <option value="0">Lunes</option>
+                        <option value="1">Martes</option>
+                        <option value="2">Miércoles</option>
+                        <option value="3">Jueves</option>
+                        <option value="4">Viernes</option>
+                        <option value="5">Sábado</option>
+                        <option value="6">Domingo</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-2">Ajuste de Carga Microciclo</label>
+                    <select id="weekGoalSelect" onchange="autoPlanWeek()" class="w-full bg-slate-900 border border-slate-600 rounded-lg p-2 text-white text-xs focus:ring-2 focus:ring-emerald-500">
+                        <option value="standard" selected>Estándar Competitivo</option>
+                        <option value="high">Sobrecarga (+15% UA)</option>
+                        <option value="tapering">Descarga (-20% UA)</option>
+                    </select>
+                </div>
+
+                <div class="flex items-end">
+                    <button onclick="simulateAllRealUA()" class="w-full bg-emerald-600 hover:bg-emerald-500 font-bold py-2 px-3 rounded-lg transition duration-200 text-xs shadow-lg shadow-emerald-950">
+                        Simular Cargas Reales
+                    </button>
+                </div>
+            </section>
+
+            <!-- Calendario Semanal -->
+            <section>
+                <h2 class="text-lg font-bold mb-3 text-emerald-400">Calendario Semanal de Carga & Partidos</h2>
+                <div id="calendarGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-7 gap-3">
+                    <!-- Tarjetas Dinámicas -->
+                </div>
+            </section>
+
+            <!-- Edición de Día & Circuitos con Borrado Limpio -->
+            <section class="bg-slate-800 p-5 rounded-xl border border-slate-700 space-y-5">
+                <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center border-b border-slate-700 pb-4 gap-4">
+                    <div>
+                        <span class="text-xs font-mono text-emerald-400 uppercase tracking-widest">Adaptación Metodológica & Edición Limpia</span>
+                        <h2 id="selectedDayTitle" class="text-xl font-bold text-white">Día Seleccionado: Martes</h2>
+                    </div>
+                    
+                    <div class="flex flex-wrap items-center gap-3 bg-slate-900 p-2.5 rounded-lg border border-slate-700">
+                        <label class="flex items-center cursor-pointer space-x-2 text-xs font-semibold">
+                            <input type="checkbox" id="dayActiveToggle" onchange="toggleSelectedDayActive()" class="w-4 h-4 text-emerald-600 rounded bg-slate-800 border-slate-600">
+                            <span id="toggleLabelText" class="text-slate-200">¿Se entrena este día?</span>
+                        </label>
+                        <div class="h-4 w-px bg-slate-700 hidden sm:block"></div>
+                        <div class="flex items-center space-x-2">
+                            <label class="text-xs text-slate-400">Tiempo disponible:</label>
+                            <input type="number" id="dayTimeInput" min="0" max="180" oninput="updateSelectedDayTime()" class="w-16 bg-slate-800 border border-slate-600 rounded px-2 py-1 text-xs text-white font-mono font-bold">
+                            <span class="text-xs text-slate-400">min</span>
                         </div>
-                        <div class="grid grid-cols-2 gap-2">
-                            <div>
-                                <label class="block text-xs text-slate-400 mb-1">sRPE (1-10)</label>
-                                <input type="number" id="rpeInput" min="1" max="10" value="7" class="w-full bg-slate-900 border border-slate-600 rounded p-2 text-xs text-white">
-                            </div>
-                            <div>
-                                <label class="block text-xs text-slate-400 mb-1">Tiempo Real (min)</label>
-                                <input type="number" id="timeInput" min="0" max="180" value="75" class="w-full bg-slate-900 border border-slate-600 rounded p-2 text-xs text-white">
-                            </div>
-                        </div>
+                        <span id="selectedDayUABadge" class="px-2.5 py-1 text-xs font-mono rounded border bg-slate-700 text-slate-200 border-slate-600">0 UA Obj.</span>
                     </div>
                 </div>
 
-                <div class="pt-3 border-t border-slate-700">
-                    <div class="flex justify-between items-center mb-2">
-                        <span class="text-xs text-slate-300">Carga Calculada:</span>
-                        <span id="calculatedUA" class="text-xl font-bold font-mono text-emerald-400">525 UA</span>
+                <div id="circuitsContainer" class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                    <!-- Contenidos interactivos -->
+                </div>
+            </section>
+
+            <!-- Banco / Base de Datos de Ejercicios -->
+            <section class="bg-slate-800 p-5 rounded-xl border border-slate-700 space-y-4">
+                <div class="flex justify-between items-center border-b border-slate-700 pb-3">
+                    <div>
+                        <h2 class="text-lg font-bold text-emerald-400">Base de Datos: Banco de Ejercicios Recomendados</h2>
+                        <p class="text-xs text-slate-400">Alternativas según disponibilidad de material, espacio o patrón de movimiento.</p>
                     </div>
-                    <button onclick="logSession()" class="w-full bg-slate-700 hover:bg-slate-600 font-semibold py-2 px-3 rounded text-xs transition">
-                        Guardar Carga Real
-                    </button>
+                </div>
+
+                <div id="exerciseLibraryGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <!-- Categorías pobladas dinámicamente -->
+                </div>
+            </section>
+
+            <!-- Dashboard: Gráfico de Ondulación & Calculadora sRPE -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="lg:col-span-2 bg-slate-800 p-5 rounded-xl border border-slate-700">
+                    <h2 class="text-lg font-semibold mb-3 text-emerald-400">Ondulación de Carga (Objetivo vs Real)</h2>
+                    <div class="h-60">
+                        <canvas id="uaChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="bg-slate-800 p-5 rounded-xl border border-slate-700 flex flex-col justify-between space-y-4">
+                    <div>
+                        <h2 class="text-lg font-semibold mb-3 text-emerald-400">Registro sRPE Post-Entreno</h2>
+                        <div class="space-y-3">
+                            <div>
+                                <label class="block text-xs text-slate-400 mb-1">Día a registrar</label>
+                                <select id="calcDaySelect" class="w-full bg-slate-900 border border-slate-600 rounded p-2 text-xs text-white" onchange="selectDayForView(parseInt(this.value))"></select>
+                            </div>
+                            <div class="grid grid-cols-2 gap-2">
+                                <div>
+                                    <label class="block text-xs text-slate-400 mb-1">sRPE (1-10)</label>
+                                    <input type="number" id="rpeInput" min="1" max="10" value="7" class="w-full bg-slate-900 border border-slate-600 rounded p-2 text-xs text-white">
+                                </div>
+                                <div>
+                                    <label class="block text-xs text-slate-400 mb-1">Tiempo Real (min)</label>
+                                    <input type="number" id="timeInput" min="0" max="180" value="75" class="w-full bg-slate-900 border border-slate-600 rounded p-2 text-xs text-white">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="pt-3 border-t border-slate-700">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-xs text-slate-300">Carga Calculada:</span>
+                            <span id="calculatedUA" class="text-xl font-bold font-mono text-emerald-400">525 UA</span>
+                        </div>
+                        <button onclick="logSession()" class="w-full bg-slate-700 hover:bg-slate-600 font-semibold py-2 px-3 rounded text-xs transition">
+                            Guardar Carga Real
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ================= PESTAÑA 2: GUÍA TEÓRICA PARA EL CUERPO TÉCNICO ================= -->
+        <div id="tabTheory" class="hidden space-y-6">
+            
+            <!-- Hero Guía -->
+            <div class="bg-gradient-to-r from-slate-800 to-slate-900 p-6 rounded-xl border border-slate-700 space-y-2">
+                <span class="text-xs font-mono text-emerald-400 uppercase tracking-widest font-bold">Manual de Interpretación Práctica</span>
+                <h2 class="text-2xl font-bold text-white">¿Cómo entender las UA y el ACWR en nuestro Cuerpo Técnico?</h2>
+                <p class="text-slate-300 text-xs md:text-sm max-w-3xl leading-relaxed">
+                    Esta guía sintetiza los conceptos clave para hablar el mismo idioma entre el preparador físico, el director técnico y el cuerpo médico. Sin fórmulas complejas: solo números claros para optimizar el rendimiento y prevenir lesiones.
+                </p>
+            </div>
+
+            <!-- Bloque 1: ¿Qué son las UA? -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="bg-slate-800 p-5 rounded-xl border border-slate-700 space-y-3">
+                    <div class="flex items-center space-x-2">
+                        <span class="text-2xl">⚡</span>
+                        <h3 class="text-lg font-bold text-emerald-400">1. ¿Qué son las Unidades Arbitrarias (UA)?</h3>
+                    </div>
+                    <p class="text-xs text-slate-300 leading-relaxed">
+                        La **UA** es la unidad con la que medimos el **"costo total de fatiga"** o **Carga Interna** de una sesión sobre el jugador. Combina la intensidad percibida con el tiempo de entrenamiento.
+                    </p>
+                    <div class="bg-slate-900 p-3 rounded-lg border border-slate-700 font-mono text-xs space-y-1">
+                        <span class="text-emerald-400 font-bold block">Fórmula:</span>
+                        <p class="text-slate-200">UA = Esfuerzo Percibido (sRPE 1-10) × Minutos de Sesión</p>
+                    </div>
+                    <div class="space-y-2 text-xs text-slate-300">
+                        <strong class="text-slate-100 block">Ejemplo Práctico:</strong>
+                        <ul class="list-disc pl-4 space-y-1 text-slate-400">
+                            <li>Un entreno de <strong>60 min</strong> a intensidad **7/10** (fuerte) = <strong>420 UA</strong>.</li>
+                            <li>Un entreno de <strong>90 min</strong> a intensidad **3/10** (regenerativo) = <strong>270 UA</strong>.</li>
+                            <li>Un partido de <strong>90 min</strong> a intensidad **9/10** (competitivo) = <strong>810 UA</strong>.</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Bloque 2: ¿Qué es el ACWR? -->
+                <div class="bg-slate-800 p-5 rounded-xl border border-slate-700 space-y-3">
+                    <div class="flex items-center space-x-2">
+                        <span class="text-2xl">📈</span>
+                        <h3 class="text-lg font-bold text-emerald-400">2. ¿Qué es el Ratio Carga Aguda / Crónica (ACWR)?</h3>
+                    </div>
+                    <p class="text-xs text-slate-300 leading-relaxed">
+                        Compara lo que el jugador hizo **esta semana** respecto a lo que está **acostumbrado a hacer** en el último mes. Nos dice si el cuerpo está preparado para absorber la carga o si lo estamos exponiendo a un pico peligroso.
+                    </p>
+                    <div class="bg-slate-900 p-3 rounded-lg border border-slate-700 font-mono text-xs space-y-1">
+                        <span class="text-emerald-400 font-bold block">Fórmula:</span>
+                        <p class="text-slate-200">ACWR = Carga Aguda (Últimos 7 días) / Carga Crónica (Promedio 28 días)</p>
+                    </div>
+                    <div class="space-y-2 text-xs text-slate-300">
+                        <strong class="text-slate-100 block">El principio del entrenamiento:</strong>
+                        <p class="text-slate-400">
+                            El cuerpo no se rompe por entrenar mucho, sino por **cambiar drásticamente de volumen/intensidad de una semana a otra** sin dar tiempo a la adaptación tisular.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tabla Guía del Semáforo: ¿Estamos bien o mal? -->
+            <div class="bg-slate-800 p-5 rounded-xl border border-slate-700 space-y-4">
+                <div class="border-b border-slate-700 pb-2">
+                    <h3 class="text-lg font-bold text-emerald-400">3. Matriz de Toma de Decisiones: ¿Cómo saber si estamos BIEN o MAL?</h3>
+                    <p class="text-xs text-slate-400">Interpretación semaforizada del ratio ACWR para la toma de decisiones del DT y PF.</p>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs">
+                        <thead class="bg-slate-900 text-slate-300 uppercase font-mono">
+                            <tr>
+                                <th class="p-3 border-b border-slate-700">Rango ACWR</th>
+                                <th class="p-3 border-b border-slate-700">Estatus</th>
+                                <th class="p-3 border-b border-slate-700">Significado Fisiológico</th>
+                                <th class="p-3 border-b border-slate-700">Riesgo de Lesión</th>
+                                <th class="p-3 border-b border-slate-700">Acción Recomendada para el CT</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-700 text-slate-300">
+                            <tr class="bg-slate-900/40">
+                                <td class="p-3 font-mono font-bold text-yellow-400">&lt; 0.80</td>
+                                <td class="p-3 font-bold text-yellow-400">Sub-entrenamiento</td>
+                                <td class="p-3">La carga semanal bajó demasiado. El jugador pierde condición.</td>
+                                <td class="p-3 text-slate-400">Bajo / Moderado</td>
+                                <td class="p-3 text-slate-300">Aumentar progresivamente los minutos o intensidad para no desentrenar.</td>
+                            </tr>
+                            <tr class="bg-emerald-950/30 border-l-4 border-emerald-500">
+                                <td class="p-3 font-mono font-bold text-emerald-400">0.80 - 1.30</td>
+                                <td class="p-3 font-bold text-emerald-400">🟢 ZONA DULCE (Sweet Spot)</td>
+                                <td class="p-3 text-emerald-200"><strong>Equilibrio perfecto.</strong> Estado de forma óptimo, alta resistencia y adaptación.</td>
+                                <td class="p-3 font-bold text-emerald-400">MUY BAJO (&lt; 5%)</td>
+                                <td class="p-3 text-emerald-200"><strong>¡Mantener el plan!</strong> Los jugadores están protegidos y rindiendo al máximo.</td>
+                            </tr>
+                            <tr class="bg-slate-900/40">
+                                <td class="p-3 font-mono font-bold text-yellow-400">1.31 - 1.50</td>
+                                <td class="p-3 font-bold text-yellow-400">🟨 Zona de Precaución</td>
+                                <td class="p-3">Incremento rápido de carga. Acumulación de fatiga neuromuscular.</td>
+                                <td class="p-3 text-yellow-400 font-semibold">Moderado (Elevándose)</td>
+                                <td class="p-3 text-slate-300">Ajustar tiempo de los circuitos, priorizar recuperación (frío, sueño, nutrición).</td>
+                            </tr>
+                            <tr class="bg-red-950/40 border-l-4 border-red-500">
+                                <td class="p-3 font-mono font-bold text-red-400">&gt; 1.50</td>
+                                <td class="p-3 font-bold text-red-400">🔴 ZONA DE PELIGRO (Danger Zone)</td>
+                                <td class="p-3 text-red-200"><strong>Pico excesivo de carga (Spike).</strong> Tejidos musculares/tendinosos al límite.</td>
+                                <td class="p-3 font-bold text-red-400">MUY ALTO (Se triplica)</td>
+                                <td class="p-3 text-red-200"><strong>DESCARGAR DE INMEDIATO.</strong> Reducir minutos de entreno o suspender bloques intensos.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Resumen de Ejecución Rápida -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 space-y-1">
+                    <span class="text-xs text-slate-400 font-mono uppercase block">Regla de Oro 1</span>
+                    <h4 class="text-sm font-bold text-emerald-400">Cuidado con las semanas cortas</h4>
+                    <p class="text-xs text-slate-300">Si venimos de una semana suave, no podemos duplicar la carga a la siguiente. Aumentar como máximo un **10-15% semanal**.</p>
+                </div>
+                <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 space-y-1">
+                    <span class="text-xs text-slate-400 font-mono uppercase block">Regla de Oro 2</span>
+                    <h4 class="text-sm font-bold text-emerald-400">El partido manda</h4>
+                    <p class="text-xs text-slate-300">El día del partido (MD) siempre tendrá la mayor carga (600-900 UA). Por eso el resto del microciclo debe modularse a su alrededor.</p>
+                </div>
+                <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 space-y-1">
+                    <span class="text-xs text-slate-400 font-mono uppercase block">Regla de Oro 3</span>
+                    <h4 class="text-sm font-bold text-emerald-400">Monitoreo Periódico</h4>
+                    <p class="text-xs text-slate-300">Tomar el sRPE **30 minutos después** de terminar la sesión para que la emoción o cansancio inmediato no sesgue la percepción real.</p>
                 </div>
             </div>
 
@@ -184,6 +336,49 @@
     <script>
         const daysOfWeek = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
         let selectedDayIndex = 1;
+
+        // Base de datos de ejercicios por categoría/material
+        const exerciseDatabase = {
+            "Sin Material / Peso Corporal": [
+                "Flexiones / Push-ups dinámicas (4x10)",
+                "Flexiones declinadas con pies elevados (3x8)",
+                "Sentadilla Búlgara sin carga (3x10/pierna)",
+                "Zancadas dinámicas multipatrón (3x12)",
+                "Nordic Hamstring asistido en suelo (3x5)",
+                "Copenhague para aductores ISO (3x20s)",
+                "Plancha frontal con anti-extensión (3x45s)"
+            ],
+            "Fuerza & Gimnasio Completo": [
+                "Sentadilla Zercher con barra (4x6 @80% 1RM)",
+                "Peso Muerto Rumano con barra (4x8)",
+                "Press de Banca / Dominadas lastradas (4x6)",
+                "Hip Thrust con barra (4x8)",
+                "Landmine Press unipodal (3x6)",
+                "Remo con barra neutro (4x8)"
+            ],
+            "Potencia & Pliometría": [
+                "Countermovement Jump (CMJ) con carga (3x5)",
+                "Drop Jumps desde cajón 30cm (3x5)",
+                "Extensiones de brazos pliométricas con palmada (3x5)",
+                "Broad Jump / Salto horizontal continuo (3x4)",
+                "Lanzamiento de balón medicinal trasnuca (3x6)",
+                "Bounds laterales monopodales (3x6/lado)"
+            ],
+            "Resistencia & Campo (Sin Cargas)": [
+                "Intermitente VAM 15''x15'' al 110% (2x8 min)",
+                "Juegos Reducidos (SSG) 4v4 o 6v6 en espacio amplio",
+                "RSA: 6 sprints 30m con 20s pausa activa",
+                "Flying Sprints: 10m acel. + 20m VMax (4 rep)",
+                "Sprints curvos (Curved Running) (3x20m)"
+            ],
+            "Movilidad & Regeneración": [
+                "Liberación miofascial con FOAM roller (10 min)",
+                "Movilidad articular 90/90 de cadera (3x10)",
+                "Press Pallof anti-rotacional con banda (3x10)",
+                "Caminata descalzo & estiramientos asistidos",
+                "Bird-Dog con pausa isométrica (3x8)"
+            ]
+        };
 
         const baseProfiles = {
             "MD": { name: "MD", phaseLabel: "PARTIDO OFICIAL", status: "🔴 Rojo", badgeColor: "bg-red-900/80 text-red-200 border-red-500", targetRPE: 9, defaultTime: 90, focus: "Competencia Oficial" },
@@ -198,39 +393,39 @@
         function getDefaultCircuitsForPhase(phaseKey) {
             if (phaseKey === "MD-4") {
                 return [
-                    { title: "Circuito 1: Fuerza Base", type: "Fuerza Máxima (3-4 Ej.)", items: ["Sentadilla Zercher con barra (4x6)", "Extensiones de brazos lastradas (4x6)", "Peso Muerto Rumano (4x8)", "Dominadas Pronas (4x6)"] },
-                    { title: "Circuito 2: Potencia Tensa", type: "Potencia / Balístico", items: ["Landmine Push Press (3x5)", "Extensiones de brazos pliométricas sobre balón (3x6)", "CMJ con carga (3x5)", "Cargadas desde bloques (3x4)"] },
-                    { title: "Circuito 3: Rigidez & Pliometría", type: "Stiffness", items: ["Drop Jumps 30cm (3x5)", "Bounds laterales (3x6)", "Extensiones de brazos explosivas con despegue (3x6)", "Rotaciones en polea (3x8)"] }
+                    { title: "Circuito 1: Fuerza Base", type: "Fuerza Máxima", items: ["Sentadilla Zercher con barra (4x6)", "Flexiones de brazos lastradas (4x6)", "Peso Muerto Rumano (4x8)"] },
+                    { title: "Circuito 2: Potencia Tensa", type: "Potencia / Balístico", items: ["Landmine Push Press (3x5)", "Flexiones pliométricas sobre balón (3x6)", "CMJ con carga (3x5)"] },
+                    { title: "Circuito 3: Rigidez & Pliometría", type: "Stiffness", items: ["Drop Jumps 30cm (3x5)", "Bounds laterales (3x6)", "Rotaciones en polea / banda (3x8)"] }
                 ];
             } else if (phaseKey === "MD-3") {
                 return [
-                    { title: "Circuito 1: Resistencia Metabólica", type: "Juegos Reducidos (SSG)", items: ["SSG 8v8 Espacio Amplio (4x6 min)", "Transiciones ofensivas y defensivas continuas", "Monitoreo de distancia a alta velocidad"] },
-                    { title: "Circuito 2: HIIT Intermitente VAM", type: "Capacidad Aeróbica", items: ["Intermitente 15'' x 15'' al 110% VAM (2x8 min)", "Cambios de dirección de 180°", "Extensiones de brazos neutras intermitentes (3x10)"] },
-                    { title: "Circuito 3: RSA & Buffer", type: "Resistencia al Sprint", items: ["6 Sprints de 30m con 20s pausa (2 bloques)", "Desaceleraciones a 2 tiempos", "Core dinámico (Plancha con toques de hombro 3x20)"] }
+                    { title: "Circuito 1: Resistencia Metabólica", type: "Juegos Reducidos (SSG)", items: ["SSG 8v8 Espacio Amplio (4x6 min)", "Transiciones ofensivas/defensivas continuas"] },
+                    { title: "Circuito 2: HIIT Intermitente VAM", type: "Capacidad Aeróbica", items: ["Intermitente 15'' x 15'' al 110% VAM (2x8 min)", "Cambios de dirección de 180°"] },
+                    { title: "Circuito 3: RSA & Buffer", type: "Resistencia al Sprint", items: ["6 Sprints de 30m con 20s pausa (2 bloques)", "Plancha frontal con toques de hombro (3x20)"] }
                 ];
             } else if (phaseKey === "MD-2") {
                 return [
-                    { title: "Circuito 1: Aceleración", type: "Velocidad Lineal", items: ["Salidas desde diferentes posiciones (3x10m)", "Sprints con trineo ligero (4x15m)", "Extensiones de brazos plio-reactivas con palmada (3x5)"] },
-                    { title: "Circuito 2: Velocidad Máxima", type: "VMax & Espacio", items: ["Flying Sprints 10m + 20m VMax (4 rep.)", "Curved running (3x20m)", "Hops monopodales continuos (3x8)"] },
-                    { title: "Circuito 3: Agilidad Reactiva", type: "Decisión Neuromuscular", items: ["COD reactivo por estímulo visual (4x5m)", "Pliometría horizontal de bajo tiempo de contacto (3x6)", "Extensiones de brazos declinadas a 1 mano asistida (3x5)"] }
+                    { title: "Circuito 1: Aceleración", type: "Velocidad Lineal", items: ["Salidas desde diferentes posiciones (3x10m)", "Sprints con trineo ligero (4x15m)"] },
+                    { title: "Circuito 2: Velocidad Máxima", type: "VMax & Espacio", items: ["Flying Sprints 10m + 20m VMax (4 rep.)", "Hops monopodales continuos (3x8)"] },
+                    { title: "Circuito 3: Agilidad Reactiva", type: "Decisión Neuromuscular", items: ["COD reactivo por estímulo visual (4x5m)", "Flexiones declinadas explosivas (3x5)"] }
                 ];
             } else if (phaseKey === "MD-1") {
                 return [
-                    { title: "Circuito 1: Activación Neuromuscular", type: "PAP", items: ["Extensiones de brazos explosivas con banda (3x4)", "Lanzamiento balón medicinal sobre cabeza (3x5)", "Saltos verticales cortos (3x3)"] },
-                    { title: "Circuito 2: Reacción Específica", type: "Aceleración Corta", items: ["Sprints ultra-cortos (0-5m) (4 rep.)", "Acciones tácticas a balón parado (ABP)", "Rondos de alta velocidad de circulación"] },
-                    { title: "Circuito 3: Tapering & Ajuste", type: "Core & Movilidad", items: ["Movilidad dinámica de aductores y cadera", "Press Pallof anti-rotacional (2x6)", "Ajuste neuro-cognitivo final"] }
+                    { title: "Circuito 1: Activación Neuromuscular", type: "PAP", items: ["Flexiones explosivas con banda (3x4)", "Lanzamiento balón medicinal trasnuca (3x5)"] },
+                    { title: "Circuito 2: Reacción Específica", type: "Aceleración Corta", items: ["Sprints ultra-cortos (0-5m) (4 rep.)", "Rondos de alta velocidad"] },
+                    { title: "Circuito 3: Tapering & Ajuste", type: "Core & Movilidad", items: ["Movilidad dinámica de cadera", "Press Pallof anti-rotacional (2x6)"] }
                 ];
             } else if (phaseKey === "MD") {
                 return [
-                    { title: "Bloque A: Calentamiento", type: "Activación", items: ["Movilidad dinámica & PAP", "Extensiones de brazos explosivas sin carga (2x5)", "Aceleraciones progresivas (3x15m)"] },
-                    { title: "Bloque B: Partido Oficial", type: "Competencia", items: ["90 Minutos de juego competitivo", "Demandas de alta intensidad y frenadas", "Registro GPS y sRPE al finalizar"] },
-                    { title: "Bloque C: Recuperación", type: "Regenerativo Inmediato", items: ["Hidratación y reposición de glucógeno", "Crioterapia / Inmersión", "Liberación miofascial ligera"] }
+                    { title: "Bloque A: Calentamiento", type: "Activación", items: ["Movilidad dinámica & PAP", "Aceleraciones progresivas (3x15m)"] },
+                    { title: "Bloque B: Partido Oficial", type: "Competencia", items: ["90 Minutos de juego competitivo", "Registro GPS y sRPE"] },
+                    { title: "Bloque C: Recuperación", type: "Regenerativo", items: ["Hidratación y glucógeno", "Crioterapia / Inmersión"] }
                 ];
             } else {
                 return [
-                    { title: "Circuito 1: Movilidad & Salud", type: "Regenerativo", items: ["Movilidad de cadera y tobillo (3x10)", "Extensiones de brazos isométricas ligeras (3x15s)", "Liberación miofascial con FOAM roller (10 min)"] },
-                    { title: "Circuito 2: Core Isométrico", type: "Estabilidad", items: ["Plancha frontal anti-extensión (3x30s)", "Bird-Dog con pausa (3x8)", "Press Pallof con banda (3x10)"] },
-                    { title: "Circuito 3: Capacidad Bajas Pulsaciones", type: "Recuperación", items: ["Bicicleta o caminata regenerativa (<60% VAM)", "Estiramientos asistidos de cadena posterior"] }
+                    { title: "Circuito 1: Movilidad & Salud", type: "Regenerativo", items: ["Movilidad de cadera y tobillo (3x10)", "Liberación miofascial con FOAM roller (10 min)"] },
+                    { title: "Circuito 2: Core Isométrico", type: "Estabilidad", items: ["Plancha frontal anti-extensión (3x30s)", "Press Pallof con banda (3x10)"] },
+                    { title: "Circuito 3: Capacidad Bajas Pulsaciones", type: "Recuperación", items: ["Caminata o bicicleta regenerativa (<60% VAM)"] }
                 ];
             }
         }
@@ -238,8 +433,29 @@
         let currentWeekData = [];
         let uaChartInstance = null;
 
+        // Gestión de Pestañas
+        function switchTab(tab) {
+            const dash = document.getElementById("tabDashboard");
+            const theory = document.getElementById("tabTheory");
+            const btnDash = document.getElementById("btnTabDashboard");
+            const btnTheory = document.getElementById("btnTabTheory");
+
+            if (tab === 'dashboard') {
+                dash.classList.remove("hidden");
+                theory.classList.add("hidden");
+                btnDash.className = "px-4 py-2 rounded-lg transition bg-emerald-600 text-white font-bold shadow";
+                btnTheory.className = "px-4 py-2 rounded-lg transition text-slate-400 hover:text-white";
+            } else {
+                dash.classList.add("hidden");
+                theory.classList.remove("hidden");
+                btnDash.className = "px-4 py-2 rounded-lg transition text-slate-400 hover:text-white";
+                btnTheory.className = "px-4 py-2 rounded-lg transition bg-emerald-600 text-white font-bold shadow";
+            }
+        }
+
         function initApp() {
             populateCalcSelect();
+            renderExerciseDatabase();
             autoPlanWeek();
             setupCalcListeners();
         }
@@ -252,6 +468,31 @@
                 opt.value = index;
                 opt.textContent = day;
                 select.appendChild(opt);
+            });
+        }
+
+        function renderExerciseDatabase() {
+            const container = document.getElementById("exerciseLibraryGrid");
+            container.innerHTML = "";
+
+            Object.keys(exerciseDatabase).forEach(category => {
+                const card = document.createElement("div");
+                card.className = "bg-slate-900/90 border border-slate-700 rounded-lg p-3 space-y-2";
+                
+                let listHTML = exerciseDatabase[category].map(ex => `
+                    <li class="text-xs text-slate-300 flex justify-between items-center bg-slate-800/60 p-1.5 rounded border border-slate-700/50 hover:border-slate-600">
+                        <span>${ex}</span>
+                        <button onclick="addExerciseToCurrentDay('${ex.replace(/'/g, "\\'")}')" class="text-[10px] bg-emerald-950 text-emerald-400 border border-emerald-600/50 hover:bg-emerald-600 hover:text-white font-bold px-2 py-0.5 rounded transition">
+                            + Usar
+                        </button>
+                    </li>
+                `).join('');
+
+                card.innerHTML = `
+                    <h3 class="text-xs font-bold text-emerald-400 border-b border-slate-700 pb-1 font-mono uppercase">${category}</h3>
+                    <ul class="space-y-1.5">${listHTML}</ul>
+                `;
+                container.appendChild(card);
             });
         }
 
@@ -273,7 +514,6 @@
                 } else {
                     let d1 = i - md1Index;
                     let d2 = md2Index !== -1 ? i - md2Index : 999;
-                    
                     let minDiff = (Math.abs(d1) <= Math.abs(d2)) ? d1 : d2;
 
                     if (minDiff === 1 || minDiff === -6) phaseKey = "MD+1";
@@ -407,6 +647,9 @@
                     <div class="flex items-center space-x-1.5">
                         <span class="text-emerald-500 font-bold text-xs">•</span>
                         <input type="text" value="${item}" onchange="updateExerciseItem(${cIdx}, ${itemIdx}, this.value)" class="w-full bg-slate-800 border border-slate-700 hover:border-slate-500 focus:border-emerald-500 text-slate-200 text-xs rounded px-2 py-1 transition">
+                        <button onclick="deleteExerciseFromCircuit(${cIdx}, ${itemIdx})" title="Eliminar ejercicio" class="text-red-400 hover:text-red-200 font-bold bg-slate-800 hover:bg-red-950/80 border border-slate-700 hover:border-red-500/50 rounded px-2 py-1 text-xs transition">
+                            ✕
+                        </button>
                     </div>
                 `).join('');
 
@@ -417,16 +660,21 @@
                             <span class="text-[9px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded border border-slate-600 font-mono">${c.type}</span>
                         </div>
                         <div class="space-y-1.5 mt-2">
-                            <span class="text-[10px] text-slate-500 uppercase font-mono block">Ejercicios & Materiales (Editable):</span>
-                            ${itemsListHTML}
+                            <span class="text-[10px] text-slate-500 uppercase font-mono block">Ejercicios (${c.items.length}):</span>
+                            ${itemsListHTML.length > 0 ? itemsListHTML : '<p class="text-xs text-slate-600 italic">Circuito vacío. Agrega ejercicios abajo o desde el banco de datos.</p>'}
                         </div>
                     </div>
                     <button onclick="addExerciseToCircuit(${cIdx})" class="text-[10px] text-emerald-400 hover:text-emerald-300 font-semibold border border-dashed border-emerald-500/40 hover:border-emerald-400 rounded py-1 w-full transition">
-                        + Agregar / Reemplazar Ejercicio
+                        + Agregar Ejercicio Blanco
                     </button>
                 `;
                 container.appendChild(circCard);
             });
+        }
+
+        function deleteExerciseFromCircuit(circuitIdx, itemIdx) {
+            currentWeekData[selectedDayIndex].circuits[circuitIdx].items.splice(itemIdx, 1);
+            renderCircuitsEditable(currentWeekData[selectedDayIndex]);
         }
 
         function updateExerciseItem(circuitIdx, itemIdx, newValue) {
@@ -440,6 +688,18 @@
         function addExerciseToCircuit(circuitIdx) {
             currentWeekData[selectedDayIndex].circuits[circuitIdx].items.push("Nuevo ejercicio adaptado");
             renderCircuitsEditable(currentWeekData[selectedDayIndex]);
+        }
+
+        function addExerciseToCurrentDay(exerciseName) {
+            const data = currentWeekData[selectedDayIndex];
+            if (!data.isTrainable) {
+                alert("Primero activa este día para poder agregar ejercicios.");
+                return;
+            }
+            if (data.circuits.length > 0) {
+                data.circuits[0].items.push(exerciseName);
+                renderCircuitsEditable(data);
+            }
         }
 
         function toggleSelectedDayActive() {
