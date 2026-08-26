@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Planificador de Rendimiento - Control de Espacio, Tiempo & UA</title>
+    <title>Planificador de Rendimiento - Múltiples MD, ACWR & Edición Contenidos</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
@@ -14,20 +14,49 @@
         <!-- Header -->
         <header class="border-b border-slate-700 pb-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
-                <h1 class="text-2xl md:text-3xl font-bold text-emerald-400">Sistema Automatizado de Carga & Biomecánica</h1>
-                <p class="text-slate-400 text-xs md:text-sm">Gestión de disponibilidad de instalaciones, tiempo efectivo y microciclos MD</p>
+                <h1 class="text-2xl md:text-3xl font-bold text-emerald-400">Sistema Automatizado de Carga, Multi-MD & ACWR</h1>
+                <p class="text-slate-400 text-xs md:text-sm">Control de múltiples partidos, edición adaptativa por material y ratio Carga Aguda:Crónica</p>
             </div>
             <div class="bg-slate-800 p-3 rounded-lg border border-slate-700 font-mono text-xs">
-                <span class="text-slate-400 block">Fórmula Carga Interna:</span>
-                <span class="text-emerald-400 font-bold">UA = sRPE (1-10) × Tiempo Disponible (min)</span>
+                <span class="text-slate-400 block">Fórmula Carga Interna & Ratio ACWR:</span>
+                <span class="text-emerald-400 font-bold">UA = sRPE × Tiempo | ACWR = Carga Aguda / Carga Crónica</span>
             </div>
         </header>
 
-        <!-- Panel de Control Principal -->
-        <section class="bg-slate-800 p-4 md:p-6 rounded-xl border border-slate-700 grid grid-cols-1 md:grid-cols-3 gap-4">
+        <!-- Monitor de Ratio Carga Aguda / Crónica (ACWR) -->
+        <section class="bg-slate-800 p-4 rounded-xl border border-slate-700 grid grid-cols-1 md:grid-cols-4 gap-4 items-center">
+            <div class="space-y-1">
+                <span class="text-xs text-slate-400 font-mono uppercase block">Carga Aguda (Semana Actual)</span>
+                <span id="acuteLoadVal" class="text-2xl font-bold font-mono text-emerald-400">0 UA</span>
+                <span class="text-[10px] text-slate-500 block">Suma real/programada de 7 días</span>
+            </div>
+            
+            <div class="space-y-1">
+                <label class="text-xs text-slate-400 font-mono uppercase block">Carga Crónica Base (28 días)</label>
+                <div class="flex items-center space-x-2">
+                    <input type="number" id="chronicLoadInput" value="2800" step="50" onchange="calculateACWR()" class="w-28 bg-slate-900 border border-slate-600 rounded px-2 py-1 text-sm text-white font-mono font-bold">
+                    <span class="text-xs text-slate-400 font-mono">UA/sem</span>
+                </div>
+                <span class="text-[10px] text-slate-500 block">Promedio histórico de últimas 4 semanas</span>
+            </div>
+
+            <div class="space-y-1">
+                <span class="text-xs text-slate-400 font-mono uppercase block">Ratio ACWR Resultante</span>
+                <span id="acwrRatioVal" class="text-2xl font-bold font-mono text-white">0.00</span>
+                <span class="text-[10px] text-slate-500 block">Zona Dulce: 0.80 - 1.30</span>
+            </div>
+
+            <div id="acwrBadgeContainer" class="p-3 rounded-lg border text-center space-y-1 bg-slate-900 border-slate-700">
+                <span class="text-xs font-bold block uppercase tracking-wider text-slate-400" id="acwrStatusTitle">Sin Carga</span>
+                <span class="text-[11px] text-slate-400 block" id="acwrStatusDesc">Calculando ratio...</span>
+            </div>
+        </section>
+
+        <!-- Panel de Control Principal (Soporte Múltiples Partidos) -->
+        <section class="bg-slate-800 p-4 md:p-6 rounded-xl border border-slate-700 grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
-                <label class="block text-xs font-semibold text-slate-300 mb-2">Día de Partido (Match Day - MD)</label>
-                <select id="matchDaySelect" onchange="autoPlanWeek()" class="w-full bg-slate-900 border border-slate-600 rounded-lg p-2.5 text-white text-sm focus:ring-2 focus:ring-emerald-500">
+                <label class="block text-xs font-semibold text-slate-300 mb-2">Partido Principal (MD1)</label>
+                <select id="md1Select" onchange="autoPlanWeek()" class="w-full bg-slate-900 border border-slate-600 rounded-lg p-2 text-white text-xs focus:ring-2 focus:ring-emerald-500">
                     <option value="0">Lunes</option>
                     <option value="1">Martes</option>
                     <option value="2">Miércoles</option>
@@ -37,43 +66,57 @@
                     <option value="6">Domingo</option>
                 </select>
             </div>
+
             <div>
-                <label class="block text-xs font-semibold text-slate-300 mb-2">Perfil del Microciclo</label>
-                <select id="weekGoalSelect" onchange="autoPlanWeek()" class="w-full bg-slate-900 border border-slate-600 rounded-lg p-2.5 text-white text-sm focus:ring-2 focus:ring-emerald-500">
-                    <option value="standard" selected>Estructurado Estándar (MD Competitivo)</option>
-                    <option value="high">Sobrecarga Controlada (+15% UA)</option>
-                    <option value="tapering">Descarga / Tapering (-20% UA)</option>
+                <label class="block text-xs font-semibold text-slate-300 mb-2">Segundo Partido (MD2 - Opcional)</label>
+                <select id="md2Select" onchange="autoPlanWeek()" class="w-full bg-slate-900 border border-slate-600 rounded-lg p-2 text-white text-xs focus:ring-2 focus:ring-emerald-500">
+                    <option value="-1" selected>Sin 2° Partido en la Semana</option>
+                    <option value="0">Lunes</option>
+                    <option value="1">Martes</option>
+                    <option value="2">Miércoles</option>
+                    <option value="3">Jueves</option>
+                    <option value="4">Viernes</option>
+                    <option value="5">Sábado</option>
+                    <option value="6">Domingo</option>
                 </select>
             </div>
+
+            <div>
+                <label class="block text-xs font-semibold text-slate-300 mb-2">Ajuste de Carga Microciclo</label>
+                <select id="weekGoalSelect" onchange="autoPlanWeek()" class="w-full bg-slate-900 border border-slate-600 rounded-lg p-2 text-white text-xs focus:ring-2 focus:ring-emerald-500">
+                    <option value="standard" selected>Estándar Competitivo</option>
+                    <option value="high">Sobrecarga (+15% UA)</option>
+                    <option value="tapering">Descarga (-20% UA)</option>
+                </select>
+            </div>
+
             <div class="flex items-end">
-                <button onclick="simulateAllRealUA()" class="w-full bg-emerald-600 hover:bg-emerald-500 font-bold py-2.5 px-4 rounded-lg transition duration-200 text-xs shadow-lg shadow-emerald-950">
-                    Simular Carga Real Completa
+                <button onclick="simulateAllRealUA()" class="w-full bg-emerald-600 hover:bg-emerald-500 font-bold py-2 px-3 rounded-lg transition duration-200 text-xs shadow-lg shadow-emerald-950">
+                    Simular Cargas Reales
                 </button>
             </div>
         </section>
 
         <!-- Vista de Calendario Semanal (Lunes a Domingo) -->
         <section>
-            <h2 class="text-lg font-bold mb-3 text-emerald-400">Calendario Semanal de Carga (Semaforización & Disponibilidad)</h2>
+            <h2 class="text-lg font-bold mb-3 text-emerald-400">Calendario Semanal de Carga & Partidos</h2>
             <div id="calendarGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-7 gap-3">
-                <!-- Generación Dinámica de Tarjetas -->
+                <!-- Tarjetas Dinámicas -->
             </div>
         </section>
 
-        <!-- Modificador Específico del Día & Circuitos -->
+        <!-- Modificador Específico del Día & Personalización de Materiales/Ejercicios -->
         <section class="bg-slate-800 p-5 rounded-xl border border-slate-700 space-y-5">
             
-            <!-- Barra de Selección y Ajuste de Disponibilidad/Tiempo -->
             <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center border-b border-slate-700 pb-4 gap-4">
                 <div>
-                    <span class="text-xs font-mono text-emerald-400 uppercase tracking-widest">Configuración de Instalación & Tiempo</span>
-                    <h2 id="selectedDayTitle" class="text-xl font-bold text-white">Día Seleccionado: Martes (MD-4 Tensión)</h2>
+                    <span class="text-xs font-mono text-emerald-400 uppercase tracking-widest">Adaptación Metodológica por Faltante de Material o Tiempo</span>
+                    <h2 id="selectedDayTitle" class="text-xl font-bold text-white">Día Seleccionado: Martes</h2>
                 </div>
                 
-                <!-- Opciones de Edición de Disponibilidad del Día -->
                 <div class="flex flex-wrap items-center gap-3 bg-slate-900 p-2.5 rounded-lg border border-slate-700">
                     <label class="flex items-center cursor-pointer space-x-2 text-xs font-semibold">
-                        <input type="checkbox" id="dayActiveToggle" onchange="toggleSelectedDayActive()" class="w-4 h-4 text-emerald-600 rounded bg-slate-800 border-slate-600 focus:ring-emerald-500">
+                        <input type="checkbox" id="dayActiveToggle" onchange="toggleSelectedDayActive()" class="w-4 h-4 text-emerald-600 rounded bg-slate-800 border-slate-600">
                         <span id="toggleLabelText" class="text-slate-200">¿Se entrena este día?</span>
                     </label>
                     <div class="h-4 w-px bg-slate-700 hidden sm:block"></div>
@@ -82,13 +125,13 @@
                         <input type="number" id="dayTimeInput" min="0" max="180" oninput="updateSelectedDayTime()" class="w-16 bg-slate-800 border border-slate-600 rounded px-2 py-1 text-xs text-white font-mono font-bold">
                         <span class="text-xs text-slate-400">min</span>
                     </div>
-                    <span id="selectedDayUABadge" class="px-2.5 py-1 text-xs font-mono rounded border bg-slate-700 text-slate-200 border-slate-600">525 UA Obj.</span>
+                    <span id="selectedDayUABadge" class="px-2.5 py-1 text-xs font-mono rounded border bg-slate-700 text-slate-200 border-slate-600">0 UA Obj.</span>
                 </div>
             </div>
 
-            <!-- Grilla de los 3 Circuitos Específicos -->
+            <!-- Grilla de los 3 Circuitos Específicos Modificables -->
             <div id="circuitsContainer" class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                <!-- Contenidos dinámicos -->
+                <!-- Contenidos interactivos y editables -->
             </div>
         </section>
 
@@ -107,7 +150,7 @@
                     <h2 class="text-lg font-semibold mb-3 text-emerald-400">Registro sRPE Post-Entreno</h2>
                     <div class="space-y-3">
                         <div>
-                            <label class="block text-xs text-slate-400 mb-1">Día de la semana</label>
+                            <label class="block text-xs text-slate-400 mb-1">Día a registrar</label>
                             <select id="calcDaySelect" class="w-full bg-slate-900 border border-slate-600 rounded p-2 text-xs text-white" onchange="selectDayForView(parseInt(this.value))"></select>
                         </div>
                         <div class="grid grid-cols-2 gap-2">
@@ -125,7 +168,7 @@
 
                 <div class="pt-3 border-t border-slate-700">
                     <div class="flex justify-between items-center mb-2">
-                        <span class="text-xs text-slate-300">Carga Obtenida:</span>
+                        <span class="text-xs text-slate-300">Carga Calculada:</span>
                         <span id="calculatedUA" class="text-xl font-bold font-mono text-emerald-400">525 UA</span>
                     </div>
                     <button onclick="logSession()" class="w-full bg-slate-700 hover:bg-slate-600 font-semibold py-2 px-3 rounded text-xs transition">
@@ -142,64 +185,55 @@
         const daysOfWeek = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
         let selectedDayIndex = 1;
 
-        const mdProfiles = {
-            "MD": { 
-                name: "MD", phaseLabel: "PARTIDO OFICIAL", status: "🔴 Rojo", badgeColor: "bg-red-900/80 text-red-200 border-red-500", targetRPE: 9, defaultTime: 90, focus: "Máxima Exigencia Competitiva",
-                circuits: [
-                    { title: "Bloque A: Calentamiento Específico", type: "Activación Neuromuscular", items: ["Movilidad dinámica global & Potenciación Post-Activación (PAP)", "Extensiones de brazos explosivas sin carga (2x5)", "Aceleraciones progresivas vectoriales (3x15m)"] },
-                    { title: "Bloque B: Estímulo Competitivo", type: "Partido Oficial", items: ["90 Minutos de juego continuo / sustituciones", "Demandas de alta intensidad y desaceleraciones", "Registros con GPS y sRPE al finalizar"] },
-                    { title: "Bloque C: Recuperación Inmediata", type: "Regeneración Inicial", items: ["Hidratación y reposición de glucógeno", "Protocolo de crioterapia / inmersión", "Liberación miofascial suave en miembros inferiores"] }
-                ]
-            },
-            "MD+1": { 
-                name: "MD+1", phaseLabel: "Regenerativo", status: "🟩 Verde", badgeColor: "bg-emerald-900/50 text-emerald-300 border-emerald-500", targetRPE: 3, defaultTime: 45, focus: "Compensación Tisular y Movilidad",
-                circuits: [
-                    { title: "Circuito 1: Movilidad & Flexibilidad", type: "Regenerativo", items: ["Movilidad articulada de cadera y tobillo (3x10)", "Extensiones de brazos isométricas ligeras (3x15s en apoyo)", "Liberación miofascial con FOAM roller (10 min)"] },
-                    { title: "Circuito 2: Core & Estabilidad", type: "Isometría & Salud Articular", items: ["Plancha frontal con anti-extensión (3x30s)", "Bird-Dog con pausa isométrica (3x8 por lado)", "Pallof Press dinámico con banda (3x10 por lado)"] },
-                    { title: "Circuito 3: Capacidad Aeróbica Bajas Pulsaciones", type: "Recuperación Cardíaca", items: ["Bicicleta / Carrera continua regenerativa (<60% VAM)", "Caminata descalzo y trabajo en césped", "Estiramientos asistidos de la cadena posterior"] }
-                ]
-            },
-            "MD-5": { 
-                name: "MD-5", phaseLabel: "Descanso / Estructural", status: "🟩 Verde", badgeColor: "bg-slate-700 text-slate-300 border-slate-500", targetRPE: 0, defaultTime: 0, focus: "Descanso Total / Desconexión",
-                circuits: [
-                    { title: "Circuito 1: Descanso Pasivo", type: "Sin Carga", items: ["Descanso biológico total", "Sueño reparador e higiene del descanso"] },
-                    { title: "Circuito 2: Nutrición & Hidratación", type: "Recuperación Biológica", items: ["Carga de carbohidratos de bajo índice glucémico", "Balance hídrico diario adecuado"] },
-                    { title: "Circuito 3: Evaluación Subjetiva", type: "Monitoreo", items: ["Cuestionario de Bienestar / Wellness (Carga mental y muscular)"] }
-                ]
-            },
-            "MD-4": { 
-                name: "MD-4", phaseLabel: "Día de Tensión", status: "🟨 Amarillo", badgeColor: "bg-yellow-900/50 text-yellow-300 border-yellow-500", targetRPE: 7, defaultTime: 75, focus: "Fuerza Estructural, Potencia y RFD",
-                circuits: [
-                    { title: "Circuito 1: Fuerza Base & Estructural", type: "Fuerza Máxima Relativa (3-4 Ejercicios)", items: ["Sentadilla Zercher con barra (4x6 @80% 1RM)", "Extensiones de brazos lastradas con agarre neutro (4x6)", "Peso Muerto Rumano / Dominante Cadera (4x8)", "Dominadas Pronas con lastre (4x6)"] },
-                    { title: "Circuito 2: Potencia Tensa & RFD", type: "Cargas Explosivas / Balístico (3-4 Ejercicios)", items: ["Landmine Push Press unipodal (3x5 por lado)", "Extensiones de brazos pliométricas sobre balón medicinal (3x6)", "Saltos al cajón con carga (Countermovement Jump) (3x5)", "Cargadas de potencia desde bloques (3x4)"] },
-                    { title: "Circuito 3: Pliometría & Rigidez Muscular", type: "Stiffness & Transferencia (3-4 Ejercicios)", items: ["Drop Jumps desde 30cm (3x5 - contacto rápido)", "Bounds laterales unipodales (3x6 por pierna)", "Extensiones de brazos explosivas con despegue de manos (3x6)", "Rotaciones explosivas con polea / Landmine (3x8 por lado)"] }
-                ]
-            },
-            "MD-3": { 
-                name: "MD-3", phaseLabel: "Día de Extensión", status: "🔴 Rojo", badgeColor: "bg-red-900/50 text-red-300 border-red-500", targetRPE: 8, defaultTime: 90, focus: "Resistencia Metabólica Específica y VAM",
-                circuits: [
-                    { title: "Circuito 1: Resistencia metabólica - SSG", type: "Juegos Reducidos Grandes (Espacio Amplio)", items: ["SSG 8v8 a espacio real (4 bloques de 6 min)", "Enfoque en desplazamientos de alta distancia total", "Transiciones ofensivas y defensivas continuas"] },
-                    { title: "Circuito 2: HIIT Intermitente VAM", type: "Capacidad Aeróbica de Alta Intensidad", items: ["Microintervalos 15'' x 15'' al 110% VAM (2 series de 8 min)", "Cambios de dirección de 180° cada 15 segundos", "Extensiones de brazos intermitentes entre bloques (3x10 neutras)"] },
-                    { title: "Circuito 3: RSA & Capacidad de Buffer", type: "Resistencia al Sprint Repetido", items: ["6 sprints de 30m con 20s de pausa activa (2 bloques)", "Desaceleraciones controladas con frenada a 2 tiempos", "Core dinámico de alta velocidad (Plancha con toques de hombro 3x20)"] }
-                ]
-            },
-            "MD-2": { 
-                name: "MD-2", phaseLabel: "Día de Velocidad", status: "🟨 Amarillo", badgeColor: "bg-yellow-900/50 text-yellow-300 border-yellow-500", targetRPE: 6, defaultTime: 60, focus: "Velocidad Máxima, Agilidad y Reacción",
-                circuits: [
-                    { title: "Circuito 1: Aceleración & Mecánica de Sprint", type: "Velocidad Lineal & Vectorial", items: ["Salidas desde diferentes posiciones (3x10m)", "Sprints con trineo de arrastre ligero (10% peso corp.) (4x15m)", "Extensiones de brazos plio-reactivas con palmada (3x5)"] },
-                    { title: "Circuito 2: Velocidad Máxima & VAM Pico", type: "VMax & Espacio Abierto", items: ["Flying Sprints: 10m de aceleración + 20m al 100% VMax (4 repeticiones)", "Curved running (Sprints en curva) (3x20m)", "Saltos monopodales continuos de baja respuesta (Hops) (3x8 por pierna)"] },
-                    { title: "Circuito 3: Agilidad Reactiva & COD", type: "Decisión Neuromuscular Corta", items: ["Cambios de dirección reactivos por estímulo visual/auditivo (4x5m)", "Pliometría horizontal de bajo tiempo de contacto (3x6 saltos)", "Extensiones de brazos declinadas a 1 mano asistida (3x5)"] }
-                ]
-            },
-            "MD-1": { 
-                name: "MD-1", phaseLabel: "Activación Pre-Competitiva", status: "🟩 Verde", badgeColor: "bg-emerald-900/50 text-emerald-300 border-emerald-500", targetRPE: 4, defaultTime: 40, focus: "Tapering, Potenciación y Reactividad",
-                circuits: [
-                    { title: "Circuito 1: Activación Neuromuscular Corta", type: "PAP & Reactividad", items: ["Extensiones de brazos explosivas con banda elástica (3x4)", "Lanzamientos de balón medicinal sobre cabeza (3x5)", "Saltos verticales con pausas cortas (3x3)"] },
-                    { title: "Circuito 2: Velocidad de Reacción Específica", type: "Sprints Cortos & Táctica", items: ["Aceleraciones ultra-cortas (0 a 5 metros) (4 repeticiones)", "Acciones tácticas a balón parado / ABP", "Rondos de alta velocidad de circulación de balón"] },
-                    { title: "Circuito 3: Movilidad Tapering & Core", type: "Ajuste Final", items: ["Movilidad dinámica de aductores y flexores de cadera", "Core anti-rotacional liviano (Press Pallof 2x6)", "Visualización y ajuste neuro-cognitivo"] }
-                ]
-            }
+        const baseProfiles = {
+            "MD": { name: "MD", phaseLabel: "PARTIDO OFICIAL", status: "🔴 Rojo", badgeColor: "bg-red-900/80 text-red-200 border-red-500", targetRPE: 9, defaultTime: 90, focus: "Competencia Oficial" },
+            "MD+1": { name: "MD+1", phaseLabel: "Regenerativo", status: "🟩 Verde", badgeColor: "bg-emerald-900/50 text-emerald-300 border-emerald-500", targetRPE: 3, defaultTime: 45, focus: "Compensación y Movilidad" },
+            "MD-4": { name: "MD-4", phaseLabel: "Fuerza / Tensión", status: "🟨 Amarillo", badgeColor: "bg-yellow-900/50 text-yellow-300 border-yellow-500", targetRPE: 7, defaultTime: 75, focus: "Tensión, Fuerza y RFD" },
+            "MD-3": { name: "MD-3", phaseLabel: "Extensión / Resistencia", status: "🔴 Rojo", badgeColor: "bg-red-900/50 text-red-300 border-red-500", targetRPE: 8, defaultTime: 90, focus: "Resistencia Metabólica y VAM" },
+            "MD-2": { name: "MD-2", phaseLabel: "Velocidad / Agilidad", status: "🟨 Amarillo", badgeColor: "bg-yellow-900/50 text-yellow-300 border-yellow-500", targetRPE: 6, defaultTime: 60, focus: "Velocidad Máxima y Reacción" },
+            "MD-1": { name: "MD-1", phaseLabel: "Activación", status: "🟩 Verde", badgeColor: "bg-emerald-900/50 text-emerald-300 border-emerald-500", targetRPE: 4, defaultTime: 40, focus: "Tapering y Reactividad" },
+            "OFF": { name: "OFF", phaseLabel: "Descanso Pasivo", status: "🟩 Verde", badgeColor: "bg-slate-700 text-slate-300 border-slate-500", targetRPE: 0, defaultTime: 0, focus: "Descanso Total / Sin Espacio" }
         };
+
+        function getDefaultCircuitsForPhase(phaseKey) {
+            if (phaseKey === "MD-4") {
+                return [
+                    { title: "Circuito 1: Fuerza Base", type: "Fuerza Máxima (3-4 Ej.)", items: ["Sentadilla Zercher con barra (4x6)", "Extensiones de brazos lastradas (4x6)", "Peso Muerto Rumano (4x8)", "Dominadas Pronas (4x6)"] },
+                    { title: "Circuito 2: Potencia Tensa", type: "Potencia / Balístico", items: ["Landmine Push Press (3x5)", "Extensiones de brazos pliométricas sobre balón (3x6)", "CMJ con carga (3x5)", "Cargadas desde bloques (3x4)"] },
+                    { title: "Circuito 3: Rigidez & Pliometría", type: "Stiffness", items: ["Drop Jumps 30cm (3x5)", "Bounds laterales (3x6)", "Extensiones de brazos explosivas con despegue (3x6)", "Rotaciones en polea (3x8)"] }
+                ];
+            } else if (phaseKey === "MD-3") {
+                return [
+                    { title: "Circuito 1: Resistencia Metabólica", type: "Juegos Reducidos (SSG)", items: ["SSG 8v8 Espacio Amplio (4x6 min)", "Transiciones ofensivas y defensivas continuas", "Monitoreo de distancia a alta velocidad"] },
+                    { title: "Circuito 2: HIIT Intermitente VAM", type: "Capacidad Aeróbica", items: ["Intermitente 15'' x 15'' al 110% VAM (2x8 min)", "Cambios de dirección de 180°", "Extensiones de brazos neutras intermitentes (3x10)"] },
+                    { title: "Circuito 3: RSA & Buffer", type: "Resistencia al Sprint", items: ["6 Sprints de 30m con 20s pausa (2 bloques)", "Desaceleraciones a 2 tiempos", "Core dinámico (Plancha con toques de hombro 3x20)"] }
+                ];
+            } else if (phaseKey === "MD-2") {
+                return [
+                    { title: "Circuito 1: Aceleración", type: "Velocidad Lineal", items: ["Salidas desde diferentes posiciones (3x10m)", "Sprints con trineo ligero (4x15m)", "Extensiones de brazos plio-reactivas con palmada (3x5)"] },
+                    { title: "Circuito 2: Velocidad Máxima", type: "VMax & Espacio", items: ["Flying Sprints 10m + 20m VMax (4 rep.)", "Curved running (3x20m)", "Hops monopodales continuos (3x8)"] },
+                    { title: "Circuito 3: Agilidad Reactiva", type: "Decisión Neuromuscular", items: ["COD reactivo por estímulo visual (4x5m)", "Pliometría horizontal de bajo tiempo de contacto (3x6)", "Extensiones de brazos declinadas a 1 mano asistida (3x5)"] }
+                ];
+            } else if (phaseKey === "MD-1") {
+                return [
+                    { title: "Circuito 1: Activación Neuromuscular", type: "PAP", items: ["Extensiones de brazos explosivas con banda (3x4)", "Lanzamiento balón medicinal sobre cabeza (3x5)", "Saltos verticales cortos (3x3)"] },
+                    { title: "Circuito 2: Reacción Específica", type: "Aceleración Corta", items: ["Sprints ultra-cortos (0-5m) (4 rep.)", "Acciones tácticas a balón parado (ABP)", "Rondos de alta velocidad de circulación"] },
+                    { title: "Circuito 3: Tapering & Ajuste", type: "Core & Movilidad", items: ["Movilidad dinámica de aductores y cadera", "Press Pallof anti-rotacional (2x6)", "Ajuste neuro-cognitivo final"] }
+                ];
+            } else if (phaseKey === "MD") {
+                return [
+                    { title: "Bloque A: Calentamiento", type: "Activación", items: ["Movilidad dinámica & PAP", "Extensiones de brazos explosivas sin carga (2x5)", "Aceleraciones progresivas (3x15m)"] },
+                    { title: "Bloque B: Partido Oficial", type: "Competencia", items: ["90 Minutos de juego competitivo", "Demandas de alta intensidad y frenadas", "Registro GPS y sRPE al finalizar"] },
+                    { title: "Bloque C: Recuperación", type: "Regenerativo Inmediato", items: ["Hidratación y reposición de glucógeno", "Crioterapia / Inmersión", "Liberación miofascial ligera"] }
+                ];
+            } else {
+                return [
+                    { title: "Circuito 1: Movilidad & Salud", type: "Regenerativo", items: ["Movilidad de cadera y tobillo (3x10)", "Extensiones de brazos isométricas ligeras (3x15s)", "Liberación miofascial con FOAM roller (10 min)"] },
+                    { title: "Circuito 2: Core Isométrico", type: "Estabilidad", items: ["Plancha frontal anti-extensión (3x30s)", "Bird-Dog con pausa (3x8)", "Press Pallof con banda (3x10)"] },
+                    { title: "Circuito 3: Capacidad Bajas Pulsaciones", type: "Recuperación", items: ["Bicicleta o caminata regenerativa (<60% VAM)", "Estiramientos asistidos de cadena posterior"] }
+                ];
+            }
+        }
 
         let currentWeekData = [];
         let uaChartInstance = null;
@@ -222,40 +256,51 @@
         }
 
         function autoPlanWeek() {
-            const mdIndex = parseInt(document.getElementById("matchDaySelect").value);
+            const md1Index = parseInt(document.getElementById("md1Select").value);
+            const md2Index = parseInt(document.getElementById("md2Select").value);
             const goalMultiplier = document.getElementById("weekGoalSelect").value === "high" ? 1.15 : (document.getElementById("weekGoalSelect").value === "tapering" ? 0.8 : 1.0);
             
             currentWeekData = [];
 
             for (let i = 0; i < 7; i++) {
-                let diff = i - mdIndex;
-                let phaseKey = "";
+                let isMatch1 = (i === md1Index);
+                let isMatch2 = (i === md2Index && md2Index !== -1);
                 
-                if (diff === 0) phaseKey = "MD";
-                else if (diff === 1 || diff === -6) phaseKey = "MD+1";
-                else if (diff === -1 || diff === 6) phaseKey = "MD-1";
-                else if (diff === -2 || diff === 5) phaseKey = "MD-2";
-                else if (diff === -3 || diff === 4) phaseKey = "MD-3";
-                else if (diff === -4 || diff === 3) phaseKey = "MD-4";
-                else phaseKey = "MD-5";
+                let phaseKey = "OFF";
 
-                const profile = mdProfiles[phaseKey];
-                const isTrainableDay = phaseKey !== "MD-5";
-                const initialTime = Math.round(profile.defaultTime * goalMultiplier);
-                const calcTargetUA = isTrainableDay ? Math.round(profile.targetRPE * initialTime) : 0;
+                if (isMatch1 || isMatch2) {
+                    phaseKey = "MD";
+                } else {
+                    let d1 = i - md1Index;
+                    let d2 = md2Index !== -1 ? i - md2Index : 999;
+                    
+                    let minDiff = (Math.abs(d1) <= Math.abs(d2)) ? d1 : d2;
+
+                    if (minDiff === 1 || minDiff === -6) phaseKey = "MD+1";
+                    else if (minDiff === -1 || minDiff === 6) phaseKey = "MD-1";
+                    else if (minDiff === -2 || minDiff === 5) phaseKey = "MD-2";
+                    else if (minDiff === -3 || minDiff === 4) phaseKey = "MD-3";
+                    else if (minDiff === -4 || minDiff === 3) phaseKey = "MD-4";
+                    else phaseKey = "OFF";
+                }
+
+                const base = baseProfiles[phaseKey];
+                const isTrainableDay = phaseKey !== "OFF";
+                const initialTime = Math.round(base.defaultTime * goalMultiplier);
+                const calcTargetUA = isTrainableDay ? Math.round(base.targetRPE * initialTime) : 0;
 
                 currentWeekData.push({
                     dayIndex: i,
                     day: daysOfWeek[i],
-                    isMD: diff === 0,
-                    isTrainable: isTrainableDay, // Toggle si se entrena o no
+                    isMD: phaseKey === "MD",
+                    isTrainable: isTrainableDay,
                     phaseKey: phaseKey,
-                    phaseLabel: profile.phaseLabel,
-                    status: profile.status,
-                    badgeColor: profile.badgeColor,
-                    focus: profile.focus,
-                    circuits: profile.circuits,
-                    targetRPE: profile.targetRPE,
+                    phaseLabel: isMatch1 ? "PARTIDO 1" : isMatch2 ? "PARTIDO 2" : base.phaseLabel,
+                    status: base.status,
+                    badgeColor: base.badgeColor,
+                    focus: base.focus,
+                    circuits: getDefaultCircuitsForPhase(phaseKey),
+                    targetRPE: base.targetRPE,
                     availableTime: initialTime,
                     targetUA: calcTargetUA,
                     actualUA: 0
@@ -265,6 +310,7 @@
             renderCalendarGrid();
             renderChart();
             selectDayForView(selectedDayIndex);
+            calculateACWR();
         }
 
         function renderCalendarGrid() {
@@ -275,10 +321,9 @@
                 const card = document.createElement("div");
                 const isSelected = idx === selectedDayIndex;
                 const isMatch = d.isMD;
-                
-                card.onclick = () => selectDayForView(idx);
-
                 let opacityStyle = d.isTrainable ? '' : 'opacity-60 bg-slate-950/40 border-slate-800';
+
+                card.onclick = () => selectDayForView(idx);
 
                 card.className = `rounded-xl border p-3 flex flex-col justify-between cursor-pointer transition-all ${opacityStyle} ${
                     isSelected ? 'ring-2 ring-emerald-400 border-emerald-400 bg-slate-800' : 
@@ -294,9 +339,9 @@
                             </span>
                         </div>
                         <span class="text-[11px] font-semibold block leading-tight ${!d.isTrainable ? 'text-slate-500' : isMatch ? 'text-red-300 font-bold uppercase' : 'text-emerald-400'}">
-                            ${d.isTrainable ? d.phaseLabel : 'Sin Espacio / Descanso'}
+                            ${d.phaseLabel}
                         </span>
-                        <span class="text-[10px] text-slate-400 block leading-tight mt-1 line-clamp-2">${d.isTrainable ? d.focus : 'Día sin disponibilidad de cancha o gimnasio'}</span>
+                        <span class="text-[10px] text-slate-400 block leading-tight mt-1 line-clamp-2">${d.isTrainable ? d.focus : 'Día libre / Sin espacio'}</span>
                     </div>
 
                     <div class="mt-3 pt-2 border-t border-slate-700/60 font-mono flex justify-between items-end">
@@ -320,7 +365,7 @@
 
             document.getElementById("selectedDayTitle").textContent = `${data.day}: ${data.isTrainable ? data.focus : 'Día de Descanso / Sin Espacio'}`;
             document.getElementById("dayActiveToggle").checked = data.isTrainable;
-            document.getElementById("toggleLabelText").textContent = data.isTrainable ? "Día Hábil (Entreno)" : "Día Cancelado / Sin Espacio";
+            document.getElementById("toggleLabelText").textContent = data.isTrainable ? "Día Hábil (Entreno)" : "Día Sin Disponibilidad";
             
             const timeInput = document.getElementById("dayTimeInput");
             timeInput.value = data.availableTime;
@@ -329,45 +374,7 @@
             document.getElementById("selectedDayUABadge").textContent = `${data.targetUA} UA Obj.`;
             document.getElementById("selectedDayUABadge").className = `px-2.5 py-1 text-xs font-mono rounded border ${data.isTrainable ? data.badgeColor : 'bg-slate-800 text-slate-500 border-slate-700'}`;
 
-            const container = document.getElementById("circuitsContainer");
-            container.innerHTML = "";
-
-            if (!data.isTrainable) {
-                container.innerHTML = `
-                    <div class="lg:col-span-3 bg-slate-900/50 border border-slate-800 rounded-lg p-8 text-center space-y-2">
-                        <span class="text-2xl">🚫</span>
-                        <h3 class="text-base font-bold text-slate-400">Sin Sesión Programada para este Día</h3>
-                        <p class="text-xs text-slate-500 max-w-md mx-auto">Has marcado este día como no entrenable por falta de espacio en el club o descanso programado. La carga objetivo se ajustó automáticamente a 0 UA.</p>
-                    </div>
-                `;
-            } else {
-                data.circuits.forEach((c) => {
-                    const circCard = document.createElement("div");
-                    circCard.className = "bg-slate-900/80 border border-slate-700 rounded-lg p-4 flex flex-col justify-between";
-                    
-                    circCard.innerHTML = `
-                        <div>
-                            <div class="flex justify-between items-start mb-2">
-                                <h3 class="font-bold text-sm text-emerald-400">${c.title}</h3>
-                                <span class="text-[10px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded border border-slate-600 font-mono">${c.type}</span>
-                            </div>
-                            <ul class="space-y-2 mt-3">
-                                ${c.items.map(item => `
-                                    <li class="text-xs text-slate-300 flex items-start">
-                                        <span class="text-emerald-500 font-bold mr-1.5">•</span>
-                                        <span>${item}</span>
-                                    </li>
-                                `).join('')}
-                            </ul>
-                        </div>
-                        <div class="mt-4 pt-2 border-t border-slate-800 text-[10px] text-slate-400 font-mono flex justify-between">
-                            <span>Ajuste: ${data.availableTime} min disp.</span>
-                            <span>3 - 4 Ejercicios</span>
-                        </div>
-                    `;
-                    container.appendChild(circCard);
-                });
-            }
+            renderCircuitsEditable(data);
 
             document.getElementById("calcDaySelect").value = dayIdx;
             document.getElementById("rpeInput").value = data.targetRPE;
@@ -377,18 +384,72 @@
             renderCalendarGrid();
         }
 
+        function renderCircuitsEditable(data) {
+            const container = document.getElementById("circuitsContainer");
+            container.innerHTML = "";
+
+            if (!data.isTrainable) {
+                container.innerHTML = `
+                    <div class="lg:col-span-3 bg-slate-900/50 border border-slate-800 rounded-lg p-8 text-center space-y-2">
+                        <span class="text-2xl">🚫</span>
+                        <h3 class="text-base font-bold text-slate-400">Sin Sesión Programada</h3>
+                        <p class="text-xs text-slate-500 max-w-md mx-auto">Día no entrenable por descanso o falta de espacio. Carga objetivo fijada en 0 UA.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            data.circuits.forEach((c, cIdx) => {
+                const circCard = document.createElement("div");
+                circCard.className = "bg-slate-900/90 border border-slate-700 rounded-lg p-4 flex flex-col justify-between space-y-3";
+                
+                let itemsListHTML = c.items.map((item, itemIdx) => `
+                    <div class="flex items-center space-x-1.5">
+                        <span class="text-emerald-500 font-bold text-xs">•</span>
+                        <input type="text" value="${item}" onchange="updateExerciseItem(${cIdx}, ${itemIdx}, this.value)" class="w-full bg-slate-800 border border-slate-700 hover:border-slate-500 focus:border-emerald-500 text-slate-200 text-xs rounded px-2 py-1 transition">
+                    </div>
+                `).join('');
+
+                circCard.innerHTML = `
+                    <div>
+                        <div class="flex justify-between items-start mb-2">
+                            <input type="text" value="${c.title}" onchange="updateCircuitTitle(${cIdx}, this.value)" class="font-bold text-xs text-emerald-400 bg-transparent border-b border-transparent hover:border-slate-600 focus:border-emerald-500 rounded px-1">
+                            <span class="text-[9px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded border border-slate-600 font-mono">${c.type}</span>
+                        </div>
+                        <div class="space-y-1.5 mt-2">
+                            <span class="text-[10px] text-slate-500 uppercase font-mono block">Ejercicios & Materiales (Editable):</span>
+                            ${itemsListHTML}
+                        </div>
+                    </div>
+                    <button onclick="addExerciseToCircuit(${cIdx})" class="text-[10px] text-emerald-400 hover:text-emerald-300 font-semibold border border-dashed border-emerald-500/40 hover:border-emerald-400 rounded py-1 w-full transition">
+                        + Agregar / Reemplazar Ejercicio
+                    </button>
+                `;
+                container.appendChild(circCard);
+            });
+        }
+
+        function updateExerciseItem(circuitIdx, itemIdx, newValue) {
+            currentWeekData[selectedDayIndex].circuits[circuitIdx].items[itemIdx] = newValue;
+        }
+
+        function updateCircuitTitle(circuitIdx, newTitle) {
+            currentWeekData[selectedDayIndex].circuits[circuitIdx].title = newTitle;
+        }
+
+        function addExerciseToCircuit(circuitIdx) {
+            currentWeekData[selectedDayIndex].circuits[circuitIdx].items.push("Nuevo ejercicio adaptado");
+            renderCircuitsEditable(currentWeekData[selectedDayIndex]);
+        }
+
         function toggleSelectedDayActive() {
             const data = currentWeekData[selectedDayIndex];
             data.isTrainable = document.getElementById("dayActiveToggle").checked;
+            data.targetUA = data.isTrainable ? Math.round(data.targetRPE * data.availableTime) : 0;
             
-            if (!data.isTrainable) {
-                data.targetUA = 0;
-            } else {
-                data.targetUA = Math.round(data.targetRPE * data.availableTime);
-            }
-
             selectDayForView(selectedDayIndex);
             renderChart();
+            calculateACWR();
         }
 
         function updateSelectedDayTime() {
@@ -406,6 +467,39 @@
             
             renderCalendarGrid();
             renderChart();
+            calculateACWR();
+        }
+
+        function calculateACWR() {
+            const acuteLoad = currentWeekData.reduce((acc, curr) => acc + (curr.actualUA > 0 ? curr.actualUA : curr.targetUA), 0);
+            const chronicLoad = parseFloat(document.getElementById("chronicLoadInput").value) || 2800;
+            
+            const acwr = chronicLoad > 0 ? (acuteLoad / chronicLoad) : 0;
+
+            document.getElementById("acuteLoadVal").textContent = `${acuteLoad} UA`;
+            document.getElementById("acwrRatioVal").textContent = acwr.toFixed(2);
+
+            const badge = document.getElementById("acwrBadgeContainer");
+            const title = document.getElementById("acwrStatusTitle");
+            const desc = document.getElementById("acwrStatusDesc");
+
+            if (acwr >= 0.80 && acwr <= 1.30) {
+                badge.className = "p-3 rounded-lg border text-center space-y-1 bg-emerald-950/80 border-emerald-500/80 text-emerald-200";
+                title.textContent = "🟢 Zona Dulce (Óptimo)";
+                desc.textContent = "Estatus de forma óptimo y riesgo de lesión controlado.";
+            } else if ((acwr > 1.30 && acwr <= 1.50) || (acwr >= 0.60 && acwr < 0.80)) {
+                badge.className = "p-3 rounded-lg border text-center space-y-1 bg-yellow-950/80 border-yellow-500/80 text-yellow-200";
+                title.textContent = acwr > 1.30 ? "🟨 Precaución (Fatiga)" : "🟨 Sub-entrenamiento";
+                desc.textContent = acwr > 1.30 ? "Pico de carga elevado. Monitorear recuperación." : "Carga insuficiente respecto a la base crónica.";
+            } else if (acwr > 1.50) {
+                badge.className = "p-3 rounded-lg border text-center space-y-1 bg-red-950/80 border-red-500/80 text-red-200";
+                title.textContent = "🔴 Riesgo Inminente";
+                desc.textContent = "Pico agudo desproporcionado. Alto riesgo de lesión tisular.";
+            } else {
+                badge.className = "p-3 rounded-lg border text-center space-y-1 bg-slate-900 border-slate-700 text-slate-400";
+                title.textContent = "Sin Carga Suficiente";
+                desc.textContent = "Faltan registros de entrenamiento.";
+            }
         }
 
         function renderChart() {
@@ -423,20 +517,8 @@
                 data: {
                     labels: labels,
                     datasets: [
-                        {
-                            label: 'UA Objetivo',
-                            data: targetData,
-                            backgroundColor: 'rgba(51, 65, 85, 0.8)',
-                            borderColor: 'rgba(100, 116, 139, 1)',
-                            borderWidth: 1
-                        },
-                        {
-                            label: 'UA Real',
-                            data: actualData,
-                            backgroundColor: 'rgba(16, 185, 129, 0.8)',
-                            borderColor: 'rgba(16, 185, 129, 1)',
-                            borderWidth: 1
-                        }
+                        { label: 'UA Objetivo', data: targetData, backgroundColor: 'rgba(51, 65, 85, 0.8)', borderColor: 'rgba(100, 116, 139, 1)', borderWidth: 1 },
+                        { label: 'UA Real', data: actualData, backgroundColor: 'rgba(16, 185, 129, 0.8)', borderColor: 'rgba(16, 185, 129, 1)', borderWidth: 1 }
                     ]
                 },
                 options: {
@@ -473,6 +555,7 @@
             currentWeekData[dayIdx].actualUA = rpe * time;
             renderCalendarGrid();
             renderChart();
+            calculateACWR();
         }
 
         function simulateAllRealUA() {
@@ -486,6 +569,7 @@
             });
             renderCalendarGrid();
             renderChart();
+            calculateACWR();
         }
 
         window.onload = initApp;
