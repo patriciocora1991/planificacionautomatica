@@ -15,23 +15,47 @@
         <header class="border-b border-slate-700 pb-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
                 <h1 class="text-2xl md:text-3xl font-bold text-emerald-400">Sistema de Control de Carga & ACWR</h1>
-                <p class="text-slate-400 text-xs md:text-sm">Gestión del microciclo, banco de ejercicios y manual sintético para el Cuerpo Técnico</p>
+                <p class="text-slate-400 text-xs md:text-sm">Gestión del microciclo, historial multisemana y manual sintético para el Cuerpo Técnico</p>
             </div>
             
-            <!-- Botones de Pestaña -->
-            <div class="flex bg-slate-800 p-1 rounded-xl border border-slate-700 font-semibold text-xs">
-                <button id="btnTabDashboard" onclick="switchTab('dashboard')" class="px-4 py-2 rounded-lg transition bg-emerald-600 text-white font-bold shadow">
-                    📊 Planificador & Dashboard
-                </button>
-                <button id="btnTabTheory" onclick="switchTab('theory')" class="px-4 py-2 rounded-lg transition text-slate-400 hover:text-white">
-                    📚 Guía Teórica (para CT)
-                </button>
+            <div class="flex items-center gap-3">
+                <!-- Botones de Pestaña -->
+                <div class="flex bg-slate-800 p-1 rounded-xl border border-slate-700 font-semibold text-xs">
+                    <button id="btnTabDashboard" onclick="switchTab('dashboard')" class="px-4 py-2 rounded-lg transition bg-emerald-600 text-white font-bold shadow">
+                        📊 Planificador & Dashboard
+                    </button>
+                    <button id="btnTabTheory" onclick="switchTab('theory')" class="px-4 py-2 rounded-lg transition text-slate-400 hover:text-white">
+                        📚 Guía Teórica (para CT)
+                    </button>
+                </div>
             </div>
         </header>
 
         <!-- ================= PESTAÑA 1: DASHBOARD Y PLANIFICADOR ================= -->
         <div id="tabDashboard" class="space-y-6">
             
+            <!-- BARRA DE GESTIÓN DE SEMANAS (PERSISTENCIA & HISTORIAL) -->
+            <section class="bg-slate-800 p-4 rounded-xl border border-slate-700 flex flex-col md:flex-row justify-between items-center gap-4">
+                <div class="flex items-center space-x-3 w-full md:w-auto">
+                    <span class="text-xs font-mono font-bold text-emerald-400 uppercase tracking-wide">Semana Activa:</span>
+                    <select id="weekSelector" onchange="changeActiveWeek(this.value)" class="bg-slate-900 border border-slate-600 rounded-lg px-3 py-1.5 text-xs font-bold text-white focus:ring-2 focus:ring-emerald-500 flex-1 md:flex-initial">
+                        <!-- Cargado dinámicamente -->
+                    </select>
+                </div>
+
+                <div class="flex items-center space-x-2 w-full md:w-auto justify-end">
+                    <button onclick="createNewWeek()" class="bg-slate-700 hover:bg-slate-600 text-white font-semibold px-3 py-1.5 rounded-lg text-xs transition border border-slate-600">
+                        ➕ Nueva Semana
+                    </button>
+                    <button onclick="saveCurrentWeek()" class="bg-emerald-600 hover:bg-emerald-500 font-bold px-4 py-1.5 rounded-lg text-xs transition shadow text-white">
+                        💾 Guardar Historial
+                    </button>
+                    <button onclick="resetAllHistory()" class="bg-red-900/60 hover:bg-red-800 text-red-200 font-semibold px-2 py-1.5 rounded-lg text-xs transition border border-red-700/50" title="Borrar Historial">
+                        🗑️
+                    </button>
+                </div>
+            </section>
+
             <!-- Monitor de Ratio Carga Aguda / Crónica (ACWR) -->
             <section class="bg-slate-800 p-4 rounded-xl border border-slate-700 grid grid-cols-1 md:grid-cols-4 gap-4 items-center">
                 <div class="space-y-1">
@@ -41,12 +65,15 @@
                 </div>
                 
                 <div class="space-y-1">
-                    <label class="text-xs text-slate-400 font-mono uppercase block">Carga Crónica Base (28 días)</label>
+                    <div class="flex justify-between items-center">
+                        <label class="text-xs text-slate-400 font-mono uppercase block">Carga Crónica Base</label>
+                        <span id="chronicSourceBadge" class="text-[9px] bg-emerald-950 text-emerald-400 border border-emerald-700 px-1 rounded">Auto Histórico</span>
+                    </div>
                     <div class="flex items-center space-x-2">
-                        <input type="number" id="chronicLoadInput" value="2800" step="50" onchange="calculateACWR()" class="w-28 bg-slate-900 border border-slate-600 rounded px-2 py-1 text-sm text-white font-mono font-bold">
+                        <input type="number" id="chronicLoadInput" value="2800" step="50" onchange="calculateACWR(true)" class="w-28 bg-slate-900 border border-slate-600 rounded px-2 py-1 text-sm text-white font-mono font-bold">
                         <span class="text-xs text-slate-400 font-mono">UA/sem</span>
                     </div>
-                    <span class="text-[10px] text-slate-500 block">Promedio histórico de últimas 4 semanas</span>
+                    <span class="text-[10px] text-slate-500 block">Promedio de semanas previas en historial</span>
                 </div>
 
                 <div class="space-y-1">
@@ -114,11 +141,11 @@
                 </div>
             </section>
 
-            <!-- Edición de Día & Circuitos con Borrado Limpio -->
+            <!-- Edición de Día & Circuitos con Modificación Manual de Orientación -->
             <section class="bg-slate-800 p-5 rounded-xl border border-slate-700 space-y-5">
                 <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center border-b border-slate-700 pb-4 gap-4">
                     <div>
-                        <span class="text-xs font-mono text-emerald-400 uppercase tracking-widest">Adaptación Metodológica & Edición Limpia</span>
+                        <span class="text-xs font-mono text-emerald-400 uppercase tracking-widest">Ajuste Específico del Día</span>
                         <h2 id="selectedDayTitle" class="text-xl font-bold text-white">Día Seleccionado: Martes</h2>
                     </div>
                     
@@ -137,6 +164,28 @@
                     </div>
                 </div>
 
+                <!-- CONTROLES DE SOBREESCRITURA MANUAL DEL DÍA -->
+                <div class="bg-slate-900/80 p-3 rounded-lg border border-slate-700 grid grid-cols-1 md:grid-cols-3 gap-3 items-center">
+                    <div>
+                        <label class="block text-[10px] text-amber-400 font-mono uppercase font-bold mb-1">⚠️ Cambio Manual de FASE / TIPO (Opcional)</label>
+                        <select id="manualPhaseSelect" onchange="applyManualPhaseOverride(this.value)" class="w-full bg-slate-800 border border-slate-600 rounded px-2 py-1 text-xs text-white">
+                            <option value="AUTO">-- Usar Planificación Automática --</option>
+                            <option value="MD">MD (Partido)</option>
+                            <option value="MD+1">MD+1 (Regenerativo)</option>
+                            <option value="MD-4">MD-4 (Fuerza / Tensión)</option>
+                            <option value="MD-3">MD-3 (Extensión / Resistencia)</option>
+                            <option value="MD-2">MD-2 (Velocidad / Agilidad)</option>
+                            <option value="MD-1">MD-1 (Activación)</option>
+                            <option value="OFF">OFF (Descanso / Libres)</option>
+                        </select>
+                    </div>
+
+                    <div class="md:col-span-2">
+                        <label class="block text-[10px] text-slate-400 font-mono uppercase font-bold mb-1">Enfoque / Orientación Táctica-Física Personalizada</label>
+                        <input type="text" id="manualFocusInput" onchange="updateManualFocus(this.value)" placeholder="Ej. Doble turno - Foco en táctica fija" class="w-full bg-slate-800 border border-slate-600 rounded px-2 py-1 text-xs text-white">
+                    </div>
+                </div>
+
                 <div id="circuitsContainer" class="grid grid-cols-1 lg:grid-cols-3 gap-4">
                     <!-- Contenidos interactivos -->
                 </div>
@@ -144,10 +193,18 @@
 
             <!-- Banco / Base de Datos de Ejercicios -->
             <section class="bg-slate-800 p-5 rounded-xl border border-slate-700 space-y-4">
-                <div class="flex justify-between items-center border-b border-slate-700 pb-3">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-slate-700 pb-3 gap-3">
                     <div>
                         <h2 class="text-lg font-bold text-emerald-400">Base de Datos: Banco de Ejercicios Recomendados</h2>
-                        <p class="text-xs text-slate-400">Alternativas según disponibilidad de material, espacio o patrón de movimiento.</p>
+                        <p class="text-xs text-slate-400">Selecciona el circuito exacto donde deseas inyectar cada ejercicio.</p>
+                    </div>
+
+                    <!-- Selector del Circuito de Destino -->
+                    <div class="flex items-center space-x-2 bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-700">
+                        <label class="text-xs text-slate-300 font-semibold font-mono">Inyectar en:</label>
+                        <select id="targetCircuitSelect" class="bg-slate-800 text-xs text-emerald-400 font-bold border border-slate-600 rounded px-2 py-1 focus:ring-1 focus:ring-emerald-500">
+                            <!-- Opciones cargadas dinámicamente -->
+                        </select>
                     </div>
                 </div>
 
@@ -200,132 +257,77 @@
 
         </div>
 
-        <!-- ================= PESTAÑA 2: GUÍA TEÓRICA PARA EL CUERPO TÉCNICO ================= -->
+        <!-- ================= PESTAÑA 2: GUÍA TEÓRICA Y MODELO DE TRABAJO PARA CT ================= -->
         <div id="tabTheory" class="hidden space-y-6">
             
-            <!-- Hero Guía -->
             <div class="bg-gradient-to-r from-slate-800 to-slate-900 p-6 rounded-xl border border-slate-700 space-y-2">
-                <span class="text-xs font-mono text-emerald-400 uppercase tracking-widest font-bold">Manual de Interpretación Práctica</span>
-                <h2 class="text-2xl font-bold text-white">¿Cómo entender las UA y el ACWR en nuestro Cuerpo Técnico?</h2>
-                <p class="text-slate-300 text-xs md:text-sm max-w-3xl leading-relaxed">
-                    Esta guía sintetiza los conceptos clave para hablar el mismo idioma entre el preparador físico, el director técnico y el cuerpo médico. Sin fórmulas complejas: solo números claros para optimizar el rendimiento y prevenir lesiones.
+                <span class="text-xs font-mono text-emerald-400 uppercase tracking-widest font-bold">Manual de Interpretación & Fundamentos del Entrenamiento</span>
+                <h2 class="text-2xl font-bold text-white">Guía Metodológica para el Cuerpo Técnico (CT)</h2>
+                <p class="text-slate-300 text-xs md:text-sm max-w-4xl leading-relaxed">
+                    Unificación de criterios entre el Director Técnico, Preparador Físico y Cuerpo Médico. Fundamentos fisiológicos, control de carga interna (UA), ratio de riesgo (ACWR) y dinámica del Microciclo Estructurado.
                 </p>
             </div>
 
-            <!-- Bloque 1: ¿Qué son las UA? -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div class="bg-slate-800 p-5 rounded-xl border border-slate-700 space-y-3">
                     <div class="flex items-center space-x-2">
                         <span class="text-2xl">⚡</span>
-                        <h3 class="text-lg font-bold text-emerald-400">1. ¿Qué son las Unidades Arbitrarias (UA)?</h3>
+                        <h3 class="text-lg font-bold text-emerald-400">1. Unidades Arbitrarias (UA)</h3>
                     </div>
                     <p class="text-xs text-slate-300 leading-relaxed">
-                        La **UA** es la unidad con la que medimos el **"costo total de fatiga"** o **Carga Interna** de una sesión sobre el jugador. Combina la intensidad percibida con el tiempo de entrenamiento.
+                        Medida cuantificable del **esfuerzo biológico total** soportado por el futbolista. Combina la intensidad autopercibida con la duración exacta de la práctica.
                     </p>
                     <div class="bg-slate-900 p-3 rounded-lg border border-slate-700 font-mono text-xs space-y-1">
-                        <span class="text-emerald-400 font-bold block">Fórmula:</span>
-                        <p class="text-slate-200">UA = Esfuerzo Percibido (sRPE 1-10) × Minutos de Sesión</p>
-                    </div>
-                    <div class="space-y-2 text-xs text-slate-300">
-                        <strong class="text-slate-100 block">Ejemplo Práctico:</strong>
-                        <ul class="list-disc pl-4 space-y-1 text-slate-400">
-                            <li>Un entreno de <strong>60 min</strong> a intensidad **7/10** (fuerte) = <strong>420 UA</strong>.</li>
-                            <li>Un entreno de <strong>90 min</strong> a intensidad **3/10** (regenerativo) = <strong>270 UA</strong>.</li>
-                            <li>Un partido de <strong>90 min</strong> a intensidad **9/10** (competitivo) = <strong>810 UA</strong>.</li>
-                        </ul>
+                        <span class="text-emerald-400 font-bold block">Fórmula Carga Interna (sRPE):</span>
+                        <p class="text-slate-200">UA = sRPE (Escala Foster 1-10) × Tiempo (minutos)</p>
                     </div>
                 </div>
 
-                <!-- Bloque 2: ¿Qué es el ACWR? -->
                 <div class="bg-slate-800 p-5 rounded-xl border border-slate-700 space-y-3">
                     <div class="flex items-center space-x-2">
                         <span class="text-2xl">📈</span>
-                        <h3 class="text-lg font-bold text-emerald-400">2. ¿Qué es el Ratio Carga Aguda / Crónica (ACWR)?</h3>
+                        <h3 class="text-lg font-bold text-emerald-400">2. Ratio Carga Aguda / Crónica (ACWR)</h3>
                     </div>
                     <p class="text-xs text-slate-300 leading-relaxed">
-                        Compara lo que el jugador hizo **esta semana** respecto a lo que está **acostumbrado a hacer** en el último mes. Nos dice si el cuerpo está preparado para absorber la carga o si lo estamos exponiendo a un pico peligroso.
+                        Relaciona la **Fatiga Actual** (Carga Aguda de los últimos 7 días) con la **Capacidad o Estado de Forma** (Carga Crónica promedio de los últimos 28 días).
                     </p>
                     <div class="bg-slate-900 p-3 rounded-lg border border-slate-700 font-mono text-xs space-y-1">
-                        <span class="text-emerald-400 font-bold block">Fórmula:</span>
-                        <p class="text-slate-200">ACWR = Carga Aguda (Últimos 7 días) / Carga Crónica (Promedio 28 días)</p>
+                        <span class="text-emerald-400 font-bold block">Fórmula del Ratio:</span>
+                        <p class="text-slate-200">ACWR = Carga Aguda (Semana Actual) / Carga Crónica (Promedio 4 Semanas)</p>
                     </div>
-                    <div class="space-y-2 text-xs text-slate-300">
-                        <strong class="text-slate-100 block">El principio del entrenamiento:</strong>
-                        <p class="text-slate-400">
-                            El cuerpo no se rompe por entrenar mucho, sino por **cambiar drásticamente de volumen/intensidad de una semana a otra** sin dar tiempo a la adaptación tisular.
+                </div>
+            </div>
+
+            <div class="bg-slate-800 p-5 rounded-xl border border-slate-700 space-y-5">
+                <div class="border-b border-slate-700 pb-3">
+                    <span class="text-xs font-mono text-emerald-400 uppercase tracking-widest font-bold">Fundamentos Metodológicos</span>
+                    <h3 class="text-xl font-bold text-white">3. Teoría del Entrenamiento Físico & Periodización Táctica</h3>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="bg-slate-900 p-4 rounded-lg border border-slate-700 space-y-2">
+                        <span class="text-lg">🔄</span>
+                        <h4 class="text-sm font-bold text-emerald-400">Principio de Supercompensación</h4>
+                        <p class="text-xs text-slate-300 leading-relaxed">
+                            Tras aplicar un estímulo de entreno, la capacidad física cae temporalmente por fatiga. Con el descanso e hidratación adecuada, el organismo se regenera **por encima del nivel inicial**.
                         </p>
                     </div>
-                </div>
-            </div>
 
-            <!-- Tabla Guía del Semáforo: ¿Estamos bien o mal? -->
-            <div class="bg-slate-800 p-5 rounded-xl border border-slate-700 space-y-4">
-                <div class="border-b border-slate-700 pb-2">
-                    <h3 class="text-lg font-bold text-emerald-400">3. Matriz de Toma de Decisiones: ¿Cómo saber si estamos BIEN o MAL?</h3>
-                    <p class="text-xs text-slate-400">Interpretación semaforizada del ratio ACWR para la toma de decisiones del DT y PF.</p>
-                </div>
+                    <div class="bg-slate-900 p-4 rounded-lg border border-slate-700 space-y-2">
+                        <span class="text-lg">🎯</span>
+                        <h4 class="text-sm font-bold text-emerald-400">Especificidad & Alternancia Horizontal</h4>
+                        <p class="text-xs text-slate-300 leading-relaxed">
+                            No se entrena "fuerza" o "resistencia" de forma aislada. Cada día del microciclo estimula una **dimensión fisiológica dominante** (Tensión, Extensión o Velocidad).
+                        </p>
+                    </div>
 
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left text-xs">
-                        <thead class="bg-slate-900 text-slate-300 uppercase font-mono">
-                            <tr>
-                                <th class="p-3 border-b border-slate-700">Rango ACWR</th>
-                                <th class="p-3 border-b border-slate-700">Estatus</th>
-                                <th class="p-3 border-b border-slate-700">Significado Fisiológico</th>
-                                <th class="p-3 border-b border-slate-700">Riesgo de Lesión</th>
-                                <th class="p-3 border-b border-slate-700">Acción Recomendada para el CT</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-slate-700 text-slate-300">
-                            <tr class="bg-slate-900/40">
-                                <td class="p-3 font-mono font-bold text-yellow-400">&lt; 0.80</td>
-                                <td class="p-3 font-bold text-yellow-400">Sub-entrenamiento</td>
-                                <td class="p-3">La carga semanal bajó demasiado. El jugador pierde condición.</td>
-                                <td class="p-3 text-slate-400">Bajo / Moderado</td>
-                                <td class="p-3 text-slate-300">Aumentar progresivamente los minutos o intensidad para no desentrenar.</td>
-                            </tr>
-                            <tr class="bg-emerald-950/30 border-l-4 border-emerald-500">
-                                <td class="p-3 font-mono font-bold text-emerald-400">0.80 - 1.30</td>
-                                <td class="p-3 font-bold text-emerald-400">🟢 ZONA DULCE (Sweet Spot)</td>
-                                <td class="p-3 text-emerald-200"><strong>Equilibrio perfecto.</strong> Estado de forma óptimo, alta resistencia y adaptación.</td>
-                                <td class="p-3 font-bold text-emerald-400">MUY BAJO (&lt; 5%)</td>
-                                <td class="p-3 text-emerald-200"><strong>¡Mantener el plan!</strong> Los jugadores están protegidos y rindiendo al máximo.</td>
-                            </tr>
-                            <tr class="bg-slate-900/40">
-                                <td class="p-3 font-mono font-bold text-yellow-400">1.31 - 1.50</td>
-                                <td class="p-3 font-bold text-yellow-400">🟨 Zona de Precaución</td>
-                                <td class="p-3">Incremento rápido de carga. Acumulación de fatiga neuromuscular.</td>
-                                <td class="p-3 text-yellow-400 font-semibold">Moderado (Elevándose)</td>
-                                <td class="p-3 text-slate-300">Ajustar tiempo de los circuitos, priorizar recuperación (frío, sueño, nutrición).</td>
-                            </tr>
-                            <tr class="bg-red-950/40 border-l-4 border-red-500">
-                                <td class="p-3 font-mono font-bold text-red-400">&gt; 1.50</td>
-                                <td class="p-3 font-bold text-red-400">🔴 ZONA DE PELIGRO (Danger Zone)</td>
-                                <td class="p-3 text-red-200"><strong>Pico excesivo de carga (Spike).</strong> Tejidos musculares/tendinosos al límite.</td>
-                                <td class="p-3 font-bold text-red-400">MUY ALTO (Se triplica)</td>
-                                <td class="p-3 text-red-200"><strong>DESCARGAR DE INMEDIATO.</strong> Reducir minutos de entreno o suspender bloques intensos.</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- Resumen de Ejecución Rápida -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 space-y-1">
-                    <span class="text-xs text-slate-400 font-mono uppercase block">Regla de Oro 1</span>
-                    <h4 class="text-sm font-bold text-emerald-400">Cuidado con las semanas cortas</h4>
-                    <p class="text-xs text-slate-300">Si venimos de una semana suave, no podemos duplicar la carga a la siguiente. Aumentar como máximo un **10-15% semanal**.</p>
-                </div>
-                <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 space-y-1">
-                    <span class="text-xs text-slate-400 font-mono uppercase block">Regla de Oro 2</span>
-                    <h4 class="text-sm font-bold text-emerald-400">El partido manda</h4>
-                    <p class="text-xs text-slate-300">El día del partido (MD) siempre tendrá la mayor carga (600-900 UA). Por eso el resto del microciclo debe modularse a su alrededor.</p>
-                </div>
-                <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 space-y-1">
-                    <span class="text-xs text-slate-400 font-mono uppercase block">Regla de Oro 3</span>
-                    <h4 class="text-sm font-bold text-emerald-400">Monitoreo Periódico</h4>
-                    <p class="text-xs text-slate-300">Tomar el sRPE **30 minutos después** de terminar la sesión para que la emoción o cansancio inmediato no sesgue la percepción real.</p>
+                    <div class="bg-slate-900 p-4 rounded-lg border border-slate-700 space-y-2">
+                        <span class="text-lg">📉</span>
+                        <h4 class="text-sm font-bold text-emerald-400">Afinamiento Táctico / Tapering (MD-1)</h4>
+                        <p class="text-xs text-slate-300 leading-relaxed">
+                            En las 24-48h previas al partido se reduce drásticamente el volumen de trabajo (-40%) manteniendo un **pico corto de alta intensidad/reactividad**.
+                        </p>
+                    </div>
                 </div>
             </div>
 
@@ -337,7 +339,6 @@
         const daysOfWeek = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
         let selectedDayIndex = 1;
 
-        // Base de datos de ejercicios por categoría/material
         const exerciseDatabase = {
             "Sin Material / Peso Corporal": [
                 "Flexiones / Push-ups dinámicas (4x10)",
@@ -430,83 +431,143 @@
             }
         }
 
+        // ================= GESTIÓN MULTISEMANA Y MEMORIA (LOCALSTORAGE) =================
+        let allWeeksHistory = [];
+        let activeWeekId = null;
         let currentWeekData = [];
         let uaChartInstance = null;
 
-        // Gestión de Pestañas
-        function switchTab(tab) {
-            const dash = document.getElementById("tabDashboard");
-            const theory = document.getElementById("tabTheory");
-            const btnDash = document.getElementById("btnTabDashboard");
-            const btnTheory = document.getElementById("btnTabTheory");
-
-            if (tab === 'dashboard') {
-                dash.classList.remove("hidden");
-                theory.classList.add("hidden");
-                btnDash.className = "px-4 py-2 rounded-lg transition bg-emerald-600 text-white font-bold shadow";
-                btnTheory.className = "px-4 py-2 rounded-lg transition text-slate-400 hover:text-white";
-            } else {
-                dash.classList.add("hidden");
-                theory.classList.remove("hidden");
-                btnDash.className = "px-4 py-2 rounded-lg transition text-slate-400 hover:text-white";
-                btnTheory.className = "px-4 py-2 rounded-lg transition bg-emerald-600 text-white font-bold shadow";
-            }
-        }
-
         function initApp() {
             populateCalcSelect();
-            renderExerciseDatabase();
-            autoPlanWeek();
+            loadHistoryFromStorage();
+
+            if (allWeeksHistory.length === 0) {
+                // Crear primera semana inicial
+                const initialWeek = createWeekObject("Semana 1");
+                allWeeksHistory.push(initialWeek);
+                activeWeekId = initialWeek.id;
+                saveHistoryToStorage();
+            } else {
+                activeWeekId = allWeeksHistory[0].id;
+            }
+
+            renderWeekSelector();
+            loadActiveWeekData();
             setupCalcListeners();
         }
 
-        function populateCalcSelect() {
-            const select = document.getElementById("calcDaySelect");
+        function createWeekObject(name) {
+            const id = 'week_' + Date.now();
+            return {
+                id: id,
+                name: name,
+                md1Index: 5,
+                md2Index: -1,
+                goalMultiplier: "standard",
+                daysData: []
+            };
+        }
+
+        function loadHistoryFromStorage() {
+            const saved = localStorage.getItem('acwr_weeks_history');
+            if (saved) {
+                try {
+                    allWeeksHistory = JSON.parse(saved);
+                } catch(e) {
+                    allWeeksHistory = [];
+                }
+            }
+        }
+
+        function saveHistoryToStorage() {
+            localStorage.setItem('acwr_weeks_history', JSON.stringify(allWeeksHistory));
+        }
+
+        function renderWeekSelector() {
+            const select = document.getElementById("weekSelector");
             select.innerHTML = "";
-            daysOfWeek.forEach((day, index) => {
+            allWeeksHistory.forEach((w, idx) => {
                 const opt = document.createElement("option");
-                opt.value = index;
-                opt.textContent = day;
+                opt.value = w.id;
+                opt.textContent = `${w.name} ${idx === 0 ? '(Actual)' : ''}`;
+                if (w.id === activeWeekId) opt.selected = true;
                 select.appendChild(opt);
             });
         }
 
-        function renderExerciseDatabase() {
-            const container = document.getElementById("exerciseLibraryGrid");
-            container.innerHTML = "";
-
-            Object.keys(exerciseDatabase).forEach(category => {
-                const card = document.createElement("div");
-                card.className = "bg-slate-900/90 border border-slate-700 rounded-lg p-3 space-y-2";
-                
-                let listHTML = exerciseDatabase[category].map(ex => `
-                    <li class="text-xs text-slate-300 flex justify-between items-center bg-slate-800/60 p-1.5 rounded border border-slate-700/50 hover:border-slate-600">
-                        <span>${ex}</span>
-                        <button onclick="addExerciseToCurrentDay('${ex.replace(/'/g, "\\'")}')" class="text-[10px] bg-emerald-950 text-emerald-400 border border-emerald-600/50 hover:bg-emerald-600 hover:text-white font-bold px-2 py-0.5 rounded transition">
-                            + Usar
-                        </button>
-                    </li>
-                `).join('');
-
-                card.innerHTML = `
-                    <h3 class="text-xs font-bold text-emerald-400 border-b border-slate-700 pb-1 font-mono uppercase">${category}</h3>
-                    <ul class="space-y-1.5">${listHTML}</ul>
-                `;
-                container.appendChild(card);
-            });
+        function changeActiveWeek(newId) {
+            saveCurrentWeekStateInMemory();
+            activeWeekId = newId;
+            loadActiveWeekData();
         }
 
+        function createNewWeek() {
+            saveCurrentWeekStateInMemory();
+            const weekNumber = allWeeksHistory.length + 1;
+            const newWeek = createWeekObject(`Semana ${weekNumber}`);
+            allWeeksHistory.unshift(newWeek); // Insertar al inicio como más reciente
+            activeWeekId = newWeek.id;
+            saveHistoryToStorage();
+            renderWeekSelector();
+            autoPlanWeek(); // Planificar estructura base
+        }
+
+        function saveCurrentWeek() {
+            saveCurrentWeekStateInMemory();
+            saveHistoryToStorage();
+            alert("✅ Semana guardada correctamente en el historial.");
+            calculateACWR(true);
+        }
+
+        function saveCurrentWeekStateInMemory() {
+            const weekObj = allWeeksHistory.find(w => w.id === activeWeekId);
+            if (weekObj) {
+                weekObj.md1Index = parseInt(document.getElementById("md1Select").value);
+                weekObj.md2Index = parseInt(document.getElementById("md2Select").value);
+                weekObj.goalMultiplier = document.getElementById("weekGoalSelect").value;
+                weekObj.daysData = JSON.parse(JSON.stringify(currentWeekData));
+            }
+        }
+
+        function loadActiveWeekData() {
+            const weekObj = allWeeksHistory.find(w => w.id === activeWeekId);
+            if (!weekObj) return;
+
+            document.getElementById("md1Select").value = weekObj.md1Index !== undefined ? weekObj.md1Index : 5;
+            document.getElementById("md2Select").value = weekObj.md2Index !== undefined ? weekObj.md2Index : -1;
+            document.getElementById("weekGoalSelect").value = weekObj.goalMultiplier || "standard";
+
+            if (weekObj.daysData && weekObj.daysData.length === 7) {
+                currentWeekData = JSON.parse(JSON.stringify(weekObj.daysData));
+                renderCalendarGrid();
+                renderChart();
+                selectDayForView(selectedDayIndex);
+                calculateACWR(true);
+            } else {
+                autoPlanWeek();
+            }
+        }
+
+        function resetAllHistory() {
+            if (confirm("¿Estás seguro de reiniciar todo el historial de semanas guardadas?")) {
+                localStorage.removeItem('acwr_weeks_history');
+                allWeeksHistory = [];
+                initApp();
+            }
+        }
+
+        // ================= LÓGICA DE AUTOPLANIFICACIÓN & MODIFICACIÓN MANUAL =================
         function autoPlanWeek() {
             const md1Index = parseInt(document.getElementById("md1Select").value);
             const md2Index = parseInt(document.getElementById("md2Select").value);
-            const goalMultiplier = document.getElementById("weekGoalSelect").value === "high" ? 1.15 : (document.getElementById("weekGoalSelect").value === "tapering" ? 0.8 : 1.0);
+            const goalMultiplierVal = document.getElementById("weekGoalSelect").value;
+            const goalMultiplier = goalMultiplierVal === "high" ? 1.15 : (goalMultiplierVal === "tapering" ? 0.8 : 1.0);
             
             currentWeekData = [];
 
             for (let i = 0; i < 7; i++) {
                 let isMatch1 = (i === md1Index);
                 let isMatch2 = (i === md2Index && md2Index !== -1);
-                
                 let phaseKey = "OFF";
 
                 if (isMatch1 || isMatch2) {
@@ -543,14 +604,50 @@
                     targetRPE: base.targetRPE,
                     availableTime: initialTime,
                     targetUA: calcTargetUA,
-                    actualUA: 0
+                    actualUA: 0,
+                    isManualOverride: false
                 });
             }
 
             renderCalendarGrid();
             renderChart();
             selectDayForView(selectedDayIndex);
+            calculateACWR(true);
+        }
+
+        // Modificación manual de Fase/Orientación por día
+        function applyManualPhaseOverride(overridePhaseKey) {
+            const data = currentWeekData[selectedDayIndex];
+
+            if (overridePhaseKey === "AUTO") {
+                data.isManualOverride = false;
+                autoPlanWeek(); // Regenerar automático
+                return;
+            }
+
+            const base = baseProfiles[overridePhaseKey];
+            data.isManualOverride = true;
+            data.phaseKey = overridePhaseKey;
+            data.isMD = overridePhaseKey === "MD";
+            data.isTrainable = overridePhaseKey !== "OFF";
+            data.phaseLabel = base.phaseLabel + " (Manual)";
+            data.badgeColor = base.badgeColor;
+            data.focus = base.focus;
+            data.targetRPE = base.targetRPE;
+            data.availableTime = base.defaultTime;
+            data.targetUA = Math.round(base.targetRPE * base.defaultTime);
+            data.circuits = getDefaultCircuitsForPhase(overridePhaseKey);
+
+            selectDayForView(selectedDayIndex);
+            renderCalendarGrid();
+            renderChart();
             calculateACWR();
+        }
+
+        function updateManualFocus(newFocus) {
+            const data = currentWeekData[selectedDayIndex];
+            data.focus = newFocus;
+            renderCalendarGrid();
         }
 
         function renderCalendarGrid() {
@@ -575,7 +672,7 @@
                         <div class="flex justify-between items-center mb-1">
                             <span class="font-bold text-xs ${isMatch ? 'text-red-400' : 'text-slate-200'}">${d.day}</span>
                             <span class="text-[9px] px-1.5 py-0.5 rounded font-mono border ${d.isTrainable ? d.badgeColor : 'bg-slate-800 text-slate-500 border-slate-700'}">
-                                ${d.isTrainable ? d.phaseKey : 'OFF'}
+                                ${d.phaseKey} ${d.isManualOverride ? '⚙️' : ''}
                             </span>
                         </div>
                         <span class="text-[11px] font-semibold block leading-tight ${!d.isTrainable ? 'text-slate-500' : isMatch ? 'text-red-300 font-bold uppercase' : 'text-emerald-400'}">
@@ -611,10 +708,15 @@
             timeInput.value = data.availableTime;
             timeInput.disabled = !data.isTrainable;
 
+            document.getElementById("manualPhaseSelect").value = data.isManualOverride ? data.phaseKey : "AUTO";
+            document.getElementById("manualFocusInput").value = data.focus || "";
+
             document.getElementById("selectedDayUABadge").textContent = `${data.targetUA} UA Obj.`;
             document.getElementById("selectedDayUABadge").className = `px-2.5 py-1 text-xs font-mono rounded border ${data.isTrainable ? data.badgeColor : 'bg-slate-800 text-slate-500 border-slate-700'}`;
 
             renderCircuitsEditable(data);
+            populateTargetCircuitSelect();
+            renderExerciseDatabase();
 
             document.getElementById("calcDaySelect").value = dayIdx;
             document.getElementById("rpeInput").value = data.targetRPE;
@@ -647,7 +749,7 @@
                     <div class="flex items-center space-x-1.5">
                         <span class="text-emerald-500 font-bold text-xs">•</span>
                         <input type="text" value="${item}" onchange="updateExerciseItem(${cIdx}, ${itemIdx}, this.value)" class="w-full bg-slate-800 border border-slate-700 hover:border-slate-500 focus:border-emerald-500 text-slate-200 text-xs rounded px-2 py-1 transition">
-                        <button onclick="deleteExerciseFromCircuit(${cIdx}, ${itemIdx})" title="Eliminar ejercicio" class="text-red-400 hover:text-red-200 font-bold bg-slate-800 hover:bg-red-950/80 border border-slate-700 hover:border-red-500/50 rounded px-2 py-1 text-xs transition">
+                        <button onclick="deleteExerciseFromCircuit(${cIdx}, ${itemIdx})" title="Eliminar ejercicio" class="text-red-400 hover:text-red-200 font-bold bg-slate-800 hover:bg-red-950/80 border border-slate-700 hover:border-red-500/50 rounded px-2 py-1 text-xs transition shrink-0">
                             ✕
                         </button>
                     </div>
@@ -661,7 +763,7 @@
                         </div>
                         <div class="space-y-1.5 mt-2">
                             <span class="text-[10px] text-slate-500 uppercase font-mono block">Ejercicios (${c.items.length}):</span>
-                            ${itemsListHTML.length > 0 ? itemsListHTML : '<p class="text-xs text-slate-600 italic">Circuito vacío. Agrega ejercicios abajo o desde el banco de datos.</p>'}
+                            ${itemsListHTML.length > 0 ? itemsListHTML : '<p class="text-xs text-slate-600 italic">Circuito vacío.</p>'}
                         </div>
                     </div>
                     <button onclick="addExerciseToCircuit(${cIdx})" class="text-[10px] text-emerald-400 hover:text-emerald-300 font-semibold border border-dashed border-emerald-500/40 hover:border-emerald-400 rounded py-1 w-full transition">
@@ -675,6 +777,7 @@
         function deleteExerciseFromCircuit(circuitIdx, itemIdx) {
             currentWeekData[selectedDayIndex].circuits[circuitIdx].items.splice(itemIdx, 1);
             renderCircuitsEditable(currentWeekData[selectedDayIndex]);
+            populateTargetCircuitSelect();
         }
 
         function updateExerciseItem(circuitIdx, itemIdx, newValue) {
@@ -683,6 +786,7 @@
 
         function updateCircuitTitle(circuitIdx, newTitle) {
             currentWeekData[selectedDayIndex].circuits[circuitIdx].title = newTitle;
+            populateTargetCircuitSelect();
         }
 
         function addExerciseToCircuit(circuitIdx) {
@@ -696,10 +800,15 @@
                 alert("Primero activa este día para poder agregar ejercicios.");
                 return;
             }
-            if (data.circuits.length > 0) {
-                data.circuits[0].items.push(exerciseName);
-                renderCircuitsEditable(data);
+
+            const circuitIdx = parseInt(document.getElementById("targetCircuitSelect").value);
+            if (isNaN(circuitIdx) || circuitIdx < 0 || !data.circuits[circuitIdx]) {
+                alert("Selecciona un circuito válido de destino.");
+                return;
             }
+
+            data.circuits[circuitIdx].items.push(exerciseName);
+            renderCircuitsEditable(data);
         }
 
         function toggleSelectedDayActive() {
@@ -730,10 +839,74 @@
             calculateACWR();
         }
 
-        function calculateACWR() {
+        function populateTargetCircuitSelect() {
+            const select = document.getElementById("targetCircuitSelect");
+            select.innerHTML = "";
+            const currentDay = currentWeekData[selectedDayIndex];
+
+            if (!currentDay || !currentDay.isTrainable || currentDay.circuits.length === 0) {
+                const opt = document.createElement("option");
+                opt.value = "-1";
+                opt.textContent = "Día Sin Circuitos Activos";
+                select.appendChild(opt);
+                return;
+            }
+
+            currentDay.circuits.forEach((c, idx) => {
+                const opt = document.createElement("option");
+                opt.value = idx;
+                opt.textContent = `${c.title || 'Circuito ' + (idx + 1)}`;
+                select.appendChild(opt);
+            });
+        }
+
+        function renderExerciseDatabase() {
+            const container = document.getElementById("exerciseLibraryGrid");
+            container.innerHTML = "";
+
+            Object.keys(exerciseDatabase).forEach(category => {
+                const card = document.createElement("div");
+                card.className = "bg-slate-900/90 border border-slate-700 rounded-lg p-3 space-y-2";
+                
+                let listHTML = exerciseDatabase[category].map(ex => `
+                    <li class="text-xs text-slate-300 flex justify-between items-center bg-slate-800/60 p-1.5 rounded border border-slate-700/50 hover:border-slate-600">
+                        <span class="pr-2">${ex}</span>
+                        <button onclick="addExerciseToCurrentDay('${ex.replace(/'/g, "\\'")}')" class="shrink-0 text-[10px] bg-emerald-950 text-emerald-400 border border-emerald-600/50 hover:bg-emerald-600 hover:text-white font-bold px-2 py-0.5 rounded transition">
+                            + Agregar
+                        </button>
+                    </li>
+                `).join('');
+
+                card.innerHTML = `
+                    <h3 class="text-xs font-bold text-emerald-400 border-b border-slate-700 pb-1 font-mono uppercase">${category}</h3>
+                    <ul class="space-y-1.5">${listHTML}</ul>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function calculateACWR(autoComputeChronic = false) {
             const acuteLoad = currentWeekData.reduce((acc, curr) => acc + (curr.actualUA > 0 ? curr.actualUA : curr.targetUA), 0);
-            const chronicLoad = parseFloat(document.getElementById("chronicLoadInput").value) || 2800;
             
+            let chronicLoad = parseFloat(document.getElementById("chronicLoadInput").value) || 2800;
+
+            // Calcular Carga Crónica automáticamente basándose en las semanas guardadas anteriores
+            if (autoComputeChronic && allWeeksHistory.length > 1) {
+                const pastWeeks = allWeeksHistory.filter(w => w.id !== activeWeekId && w.daysData && w.daysData.length === 7);
+                if (pastWeeks.length > 0) {
+                    const last4Weeks = pastWeeks.slice(0, 4); // Tomar hasta 4 semanas previas
+                    const sumAcutePast = last4Weeks.reduce((sum, w) => {
+                        const weekSum = w.daysData.reduce((dSum, d) => dSum + (d.actualUA > 0 ? d.actualUA : d.targetUA), 0);
+                        return sum + weekSum;
+                    }, 0);
+                    chronicLoad = Math.round(sumAcutePast / last4Weeks.length);
+                    document.getElementById("chronicLoadInput").value = chronicLoad;
+                    document.getElementById("chronicSourceBadge").textContent = `Prom. ${last4Weeks.length} sem. guardadas`;
+                }
+            } else if (allWeeksHistory.length <= 1) {
+                document.getElementById("chronicSourceBadge").textContent = "Manual / Defecto";
+            }
+
             const acwr = chronicLoad > 0 ? (acuteLoad / chronicLoad) : 0;
 
             document.getElementById("acuteLoadVal").textContent = `${acuteLoad} UA`;
@@ -793,6 +966,17 @@
             });
         }
 
+        function populateCalcSelect() {
+            const select = document.getElementById("calcDaySelect");
+            select.innerHTML = "";
+            daysOfWeek.forEach((day, index) => {
+                const opt = document.createElement("option");
+                opt.value = index;
+                opt.textContent = day;
+                select.appendChild(opt);
+            });
+        }
+
         function setupCalcListeners() {
             const rpe = document.getElementById("rpeInput");
             const time = document.getElementById("timeInput");
@@ -816,6 +1000,7 @@
             renderCalendarGrid();
             renderChart();
             calculateACWR();
+            saveCurrentWeekStateInMemory();
         }
 
         function simulateAllRealUA() {
@@ -830,6 +1015,26 @@
             renderCalendarGrid();
             renderChart();
             calculateACWR();
+            saveCurrentWeekStateInMemory();
+        }
+
+        function switchTab(tab) {
+            const dash = document.getElementById("tabDashboard");
+            const theory = document.getElementById("tabTheory");
+            const btnDash = document.getElementById("btnTabDashboard");
+            const btnTheory = document.getElementById("btnTabTheory");
+
+            if (tab === 'dashboard') {
+                dash.classList.remove("hidden");
+                theory.classList.add("hidden");
+                btnDash.className = "px-4 py-2 rounded-lg transition bg-emerald-600 text-white font-bold shadow";
+                btnTheory.className = "px-4 py-2 rounded-lg transition text-slate-400 hover:text-white";
+            } else {
+                dash.classList.add("hidden");
+                theory.classList.remove("hidden");
+                btnDash.className = "px-4 py-2 rounded-lg transition text-slate-400 hover:text-white";
+                btnTheory.className = "px-4 py-2 rounded-lg transition bg-emerald-600 text-white font-bold shadow";
+            }
         }
 
         window.onload = initApp;
